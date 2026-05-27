@@ -20,17 +20,181 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+
+
 ## Learn More
+# 🕹️ RoutineMon — 루틴몬
 
-To learn more about Next.js, take a look at the following resources:
+> 루틴몬(RoutineMon) 은 최대 5명의 친구가 방을 만들어 각자의 일일 루틴을 사진으로 인증하고, 
+함께 펫(Mon)을 성장시키는 소셜 습관 형성 웹앱입니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📌 프로젝트 개요
 
-## Deploy on Vercel
+**루틴몬(RoutineMon)** 은 최대 5명의 친구가 방을 만들어 각자의 일일 루틴을 사진으로 인증하고, 함께 펫(Mon)을 성장시키는 소셜 습관 형성 웹앱입니다.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **루틴 체크** — 하루 4개의 루틴을 사진으로 인증
+- **펫 성장 시스템** — 퀘스트를 완료하며 Mon을 함께 키움
+- **셋 로그** — 하루 활동을 하나의 이미지로 저장
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🛠 기술 스택
+
+| 구분 | 기술 |
+|------|------|
+| 프론트엔드 | React (Vite) |
+| 백엔드 | Node.js + Express |
+| 실시간 통신 | Socket.io |
+| 데이터베이스 | MySQL |
+| 이미지 저장 | Cloudinary |
+| 스케줄러 | node-cron |
+| 보안 | bcrypt (PIN 해싱) |
+
+---
+
+## 🗂 폴더 구조
+
+```
+routinemon/
+├── client/       # React 프론트엔드
+└── server/       # Node.js 백엔드
+```
+
+> 상세 폴더 구조는 [`폴더_구조_설계.md`](./폴더_구조_설계.md) 참고
+
+---
+
+## 📱 페이지 구성
+
+### 1. Home
+- 방 신설 (인원 수 선택 → CREATE ROOM)
+- 방 코드 입력 후 입장 (START)
+
+### 2. 플레이어 셋업
+- 플레이어 슬롯 선택
+- 닉네임 + PIN 4자리 동시 설정
+- 재입장 시 슬롯 선택 → PIN 입력으로 본인 인증
+
+### 3. 플레이어 방 (Players' Room)
+- 루틴몬 상태 (캐릭터 이미지 / 표정 / LV / STEP / EXP 바)
+- 플레이어 슬롯 (캐릭터 / 닉네임 / 기여도 1~3위)
+- 일일 퀘스트 진행도
+- 파티 퀘스트 알림 및 진행 상황
+- 우측 버튼: 홈 / 도감 / 플레이어 설정 / 방 설정
+
+### 4. 루틴 업로드
+- 플레이어별 루틴 말풍선 + 사진 업로드 프레임
+- Daily / Party 탭 전환
+- 동그라미 클릭 시 해당 업로드 사진 렌더링
+
+### 5. 로그 만들기 (Create Log)
+- 당일 업로드된 사진을 하나의 이미지 파일로 다운로드
+
+### 6. 도감
+- Mon 전체 목록 (육지 5종 / 해양 5종 / 희귀 종)
+- 미획득 종은 실루엣으로 표시
+
+### 7. 플레이어 커스텀
+- 닉네임 / 스킨 / 루틴 4개 수정
+
+---
+
+## 🎮 핵심 시스템
+
+### 일일 퀘스트
+- 각 플레이어가 설정한 루틴 4개 중 **3개 이상 사진 업로드** → 해당 플레이어 기여 +1
+- 방 전체 플레이어 수만큼 기여가 모이면 **일일 퀘스트 완료**
+- 완료 보상: **EXP +20%**
+- 매일 자정 초기화
+
+### 파티 퀘스트
+- 하루 4회 발생 (01시 / 07시 / 13시 / 19시)
+- 플레이어 1명이 YES 수락 → 전원이 제한 시간 **2시간** 내 사진 업로드 시 완료
+- 완료 보상: **EXP +5%** + 낮은 확률로 랜덤 스킨 1개
+- 퀘스트 내용 예시: "빨간 지붕을 찍어라!", "브이를 하고 셀카를 찍으세요!"
+- 업로드된 사진은 **Claude Vision API(Haiku)** 가 퀘스트 내용과 일치하는지 판별 (통과 시 기여 처리, 실패 시 재업로드 요청)
+
+### 기여도 순위
+플레이어 방 슬롯에 기여도 1~3위를 표시합니다.
+
+```
+기여도 점수 = (일일 퀘스트 완료 일수 × 3) + (파티 퀘스트 기여 횟수 × 1)
+```
+
+| 활동 | 가중치 | 이유 |
+|------|--------|------|
+| 일일 퀘스트 완료 (1일) | ×3 | 꾸준한 루틴 실천이 핵심 |
+| 파티 퀘스트 기여 (1회) | ×1 | 보너스 참여 활동 |
+
+---
+
+## 🐣 Mon 성장 시스템
+
+### 성장 단계
+
+```
+EGG(알) → BABY(아기) → CHILD(어린이) → ADULT(어른이)
+```
+
+- 각 단계마다 LV1 → LV2로 레벨업 후 다음 단계로 진화
+- 알 단계에서는 종류를 알 수 없고, **아기 단계 진화 시** 종류가 공개됨
+- ADULT LV2 EXP 100% 달성 시 새로운 알을 랜덤으로 획득
+
+### 도감 구성
+
+| 카테고리 | 종류 수 |
+|----------|--------|
+| 육지 동물 | 5종 |
+| 해양 동물 | 5종 |
+| 희귀 동물 | 5종 |
+
+---
+
+## 😶 루틴몬 상태 시스템
+
+루틴몬 이미지 옆에 표정과 함께 표시됩니다. 방 전체의 퀘스트 진행 상황에 따라 변화합니다.
+
+| 우선순위 | 조건 | 표정 | EXP 패널티 |
+|---------|------|------|-----------|
+| 1 | 파티 퀘스트 완료 후 30분 이내 | `\(OvO)/` | 없음 |
+| 2 | 3일 이상 연속 일일 퀘스트 완료 | `^o^  ★` | 없음 |
+| 3 | EXP 80% 이상 (진화 임박) | `>o<` | 없음 |
+| 4 | 오늘 일일 퀘스트 완료 | `O o O` | 없음 |
+| 5 | 1일 미진행 | `o _ o` | 없음 (경고) |
+| 6 | 2~5일 미진행 | `Zz` | **-5% / 일** |
+| 7 | 6일 이상 미진행 | `x _ x` | **-10% / 일** |
+
+> **패널티 규칙**
+> - 기준: 방 전체에서 아무도 일일 퀘스트를 완료하지 못한 날 기준으로 카운트
+> - 하한선: 현재 레벨 EXP 0%에서 멈춤 (레벨·스테이지 강등 없음)
+> - 적용 시점: 매일 자정 cron 실행
+
+---
+
+## 🔐 입장 방식
+
+로그인 없이 방 코드로 입장합니다. 슬롯 보호를 위해 PIN을 사용합니다.
+
+```
+[방 신설]  인원 선택 → 슬롯 선택 → 닉네임 + PIN 설정 → 입장
+[재입장]   방 코드 입력 → 슬롯 선택 → PIN 입력 → 입장
+[PIN 분실] 다른 플레이어 1명 실시간 승인 → PIN 재설정
+           (방에 혼자인 경우: 닉네임 + 방 코드 일치 확인으로 재설정)
+```
+
+---
+
+## 💾 데이터 보존
+
+- 업로드 사진 및 기록은 **최대 3일** 보존
+- 매일 자정 3일 이전 데이터 자동 삭제
+
+---
+
+## 📄 문서
+
+| 문서 | 내용 |
+|------|------|
+| [`DB_스키마_설계.md`](./DB_스키마_설계.md) | 전체 테이블 설계 및 DDL |
