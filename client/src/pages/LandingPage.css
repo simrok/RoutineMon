@@ -1,0 +1,198 @@
+@font-face {
+  font-family: 'GalmuriMono9';
+  src: url('/assets/fonts/GalmuriMono9.ttf') format('truetype');
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.landing-container {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-image: url('/assets/backgroundImage/background.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 40px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 홈 버튼 */
+.home-btn {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.home-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 로고 */
+.logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50px;
+  gap: 0;
+}
+
+.logo-main {
+  width: 90%;
+  object-fit: contain;
+}
+
+.logo-sub {
+  width: 40%;
+  object-fit: contain;
+  margin-top: -8px;
+}
+
+/* 배너 */
+.banner-img {
+  width: 90%;
+  margin-top: 25px;
+  margin-bottom: 20px;
+  object-fit: contain;
+}
+
+/* 방 만들기 섹션 */
+.create-section {
+  width: 80%;
+  position: relative;
+}
+
+.select-frame {
+  width: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.create-content {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.select-players-img {
+  width: 80%;
+  margin-top: 20px;
+  margin-bottom: -10px;
+  object-fit: contain;
+}
+
+.number-buttons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.number-btn {
+  width: 45px;
+  height: 45px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.number-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.create-room-btn {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 20px;
+  width: 40%;
+}
+
+.create-room-btn img {
+  width: 100%;
+  object-fit: contain;
+}
+
+/* 방 참여 섹션 */
+.join-section {
+  width: 72%;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roomcode-frame {
+  position: relative;
+  flex: 1;
+}
+
+.roomcode-frame img {
+  width: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+
+.roomcode-input {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 75%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 14px;
+  color: #4800FF;
+  text-align: left;
+  letter-spacing: 5px;
+  z-index: 10;
+}
+
+.roomcode-input::placeholder {
+  color: #999999;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 14px;
+  letter-spacing: 3px;
+  opacity: 1;
+}
+
+.start-btn {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 50px;
+  flex-shrink: 0;
+}
+
+.start-btn img {
+  width: 100%;
+  object-fit: contain;
+}

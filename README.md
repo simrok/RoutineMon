@@ -1,3 +1,5 @@
+/RoutineMon/RoutineMon/client에서 npm install 후 npm run dev로 실행하세요.
+
 # 🕹️ RoutineMon — 루틴몬
 
 > 루틴몬(RoutineMon) 은 최대 5명의 친구가 방을 만들어 각자의 일일 루틴을 사진으로 인증하고, 
