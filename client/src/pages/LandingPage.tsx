@@ -31,7 +31,7 @@ export default function LandingPage() {
         createdAt: new Date().toISOString(),
       })
       setMyPlayer(player)
-      navigate(`/room/${newCode}`)
+      navigate(`/room/${newCode}/select`)
     } catch (e) {
       console.error(e)
     } finally {
@@ -53,7 +53,7 @@ export default function LandingPage() {
         createdAt: new Date().toISOString(),
       })
       setMyPlayer(player)
-      navigate(`/room/${roomCode}`)
+      navigate(`/room/${roomCode}/select`)
     } catch (e) {
       console.error(e)
     } finally {

@@ -79,7 +79,7 @@
   "success": true,
   "data": {
     "roomId": 1,
-    "roomCode": "A3F9K2",
+    "roomCode": "123456",
     "maxPlayers": 4,
     "createdAt": "2025-06-01T00:00:00Z"
   }
@@ -99,7 +99,7 @@
   "success": true,
   "data": {
     "roomId": 1,
-    "roomCode": "A3F9K2",
+    "roomCode": "123456",
     "maxPlayers": 4,
     "players": [
       {

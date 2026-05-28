@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
+import CharacterSelectPage from './pages/CharacterSelectPage'
 import RoomPage from './pages/RoomPage'
 import UploadPage from './pages/UploadPage'
 import PartyQuestPage from './pages/PartyQuestPage'
@@ -11,6 +12,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/room/:roomCode/select" element={<CharacterSelectPage />} />
         <Route path="/room/:roomCode" element={<RoomPage />} />
         <Route path="/room/:roomCode/upload" element={<UploadPage />} />
         <Route path="/room/:roomCode/party-quest" element={<PartyQuestPage />} />
