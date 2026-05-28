@@ -1,0 +1,187 @@
+@font-face {
+  font-family: 'GalmuriMono9';
+  src: url('/assets/fonts/GalmuriMono9.ttf') format('truetype');
+}
+
+.charselect-container {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-image: url('/assets/backgroundImage/background.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 40px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 홈 버튼 */
+.charselect-container .home-btn {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.charselect-container .home-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 로고 */
+.charselect-container .logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50px;
+  gap: 0;
+}
+
+.charselect-container .logo-main {
+  width: 90%;
+  object-fit: contain;
+}
+
+.charselect-container .logo-sub {
+  width: 40%;
+  object-fit: contain;
+  margin-top: -8px;
+}
+
+/* 캐릭터 선택 프레임 */
+.charselect-frame {
+  width: 85%;
+  background-color: #000000;
+  border-radius: 0px;
+  margin-top: 20px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.choose-title {
+  width: 80%;
+  object-fit: contain;
+  margin-bottom: 6px;
+}
+
+/* 플레이어 목록 */
+.player-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.player-row.inactive {
+  cursor: default;
+}
+
+/* 별 */
+.star-area {
+  width: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.star-area img {
+  width: 18px;
+  object-fit: contain;
+}
+
+/* 캐릭터 이미지 */
+.character-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* 닉네임 프레임 */
+.nickname-frame-wrap {
+  position: relative;
+  flex: 1;
+}
+
+.nickname-frame-img {
+  width: 95%;
+  object-fit: contain;
+  display: block;
+}
+
+.player-info {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 75%;
+  gap: 8px;
+}
+
+.player-num {
+  font-size: 13px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.player-nickname {
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70px;
+}
+
+/* START 버튼 */
+.start-long-btn {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 50%;
+  margin-top: -5px;
+}
+
+.start-long-btn img {
+  width: 100%;
+  object-fit: contain;
+}
+
+.start-long-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 방 코드 */
+.room-code-display {
+  font-family: 'GalmuriMono9', monospace;
+  color: #B39EFF;
+  font-size: 14px;
+  margin-top: 20px;
+  letter-spacing: 4px;
+}
