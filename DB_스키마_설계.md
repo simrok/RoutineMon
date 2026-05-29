@@ -66,6 +66,7 @@ CREATE TABLE players (
   slot_number     TINYINT       NOT NULL,             -- 1~5 (플레이어 슬롯 번호)
   nickname        VARCHAR(7)    DEFAULT 'Unknown',
   pin_hash        VARCHAR(255)  DEFAULT NULL,         -- bcrypt 해시, 닉네임 설정 시 함께 등록
+  is_host         BOOLEAN       DEFAULT FALSE,        -- 방을 신설한 플레이어 여부
   current_skin_id INT           DEFAULT NULL,         -- 현재 적용 스킨 (NULL = 기본)
   created_at      DATETIME      DEFAULT CURRENT_TIMESTAMP,
 
@@ -82,6 +83,7 @@ CREATE TABLE players (
 | slot_number | TINYINT | 방 안의 플레이어 슬롯 번호 (1~5) |
 | nickname | VARCHAR(7) | 기본값 'Unknown', 입장 시 설정 (한글/영문/숫자, 최대 7자) |
 | pin_hash | VARCHAR(255) | bcrypt 해시, 닉네임 설정 시 함께 등록. 이후 재입장 시 PIN 검증에 사용 |
+| is_host | BOOLEAN | 방을 신설한 플레이어이면 TRUE. 홈 버튼 클릭 시 팝업 여부 분기에 사용 |
 | current_skin_id | INT | FK → skins, 현재 적용 중인 스킨 |
 
 > **Note:** 방이 삭제되면 players도 CASCADE 삭제됨
