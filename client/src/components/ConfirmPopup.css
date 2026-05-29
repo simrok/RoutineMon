@@ -1,0 +1,62 @@
+@font-face {
+  font-family: 'GalmuriMono9';
+  src: url('/assets/fonts/GalmuriMono9.ttf') format('truetype');
+}
+
+/* 반투명 배경 */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+/* 팝업 박스 */
+.popup-box {
+  background-color: rgba(179, 158, 255, 0.90);
+  padding: 32px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 75%;
+  max-width: 300px;
+}
+
+/* 메시지 */
+.popup-message {
+  font-family: 'GalmuriMono9', monospace;
+  color: #4800FF;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.8;
+  margin: 0;
+  word-break: keep-all;
+}
+
+/* 버튼 행 */
+.popup-buttons {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.popup-btn img {
+  height: 40px;
+  object-fit: contain;
+}
+
+.popup-btn:hover {
+  opacity: 0.8;
+}

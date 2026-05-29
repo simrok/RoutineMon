@@ -1,0 +1,297 @@
+@font-face {
+  font-family: 'GalmuriMono9';
+  src: url('/assets/fonts/GalmuriMono9.ttf') format('truetype');
+}
+
+.setup-container {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-image: url('/assets/backgroundImage/background.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 20px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 홈 버튼 */
+.setup-container .home-btn {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.setup-container .home-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 로고 */
+.setup-container .logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50px;
+  gap: 0;
+}
+
+.setup-container .logo-main {
+  width: 90%;
+  object-fit: contain;
+}
+
+.setup-container .logo-sub {
+  width: 40%;
+  object-fit: contain;
+  margin-top: -8px;
+}
+
+/* 메인 프레임 — CharacterSelectPage와 동일한 width/margin */
+.setup-frame {
+  width: 85%;
+  background-color: rgba(0, 0, 0, 0.70);
+  border-radius: 0px;
+  margin-top: 20px;
+  padding: 24px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 섹션 */
+.section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title {
+  font-family: 'GalmuriMono9', monospace;
+  color: #00FFFF;
+  font-size: 17px;
+  text-align: center;
+  margin: 0;
+  margin-top: 25px;
+}
+
+.section-sub {
+  font-family: 'GalmuriMono9', monospace;
+  color: #00FFAA;
+  font-size: 12px;
+  text-align: center;
+  margin: 0;
+  margin-top: -4px;
+}
+
+/* 닉네임 입력 */
+.input-wrap {
+  position: relative;
+  width: 70%;
+}
+
+.input-frame-img {
+  width: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.nickname-input {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  transform: translateY(-50%);
+  width: 72%;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 12px;
+  color: #4800FF;
+  caret-color: #4800FF;
+}
+
+.nickname-input::placeholder {
+  color: #999999;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 12px;
+  opacity: 1;
+}
+
+.char-count {
+  position: absolute;
+  right: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 9px;
+  color: #aaaaaa;
+  pointer-events: none;
+}
+
+/* CONFIRM 행 */
+.confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.confirm-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+
+.confirm-btn img {
+  height: 36px;
+  object-fit: contain;
+}
+
+/* ok / fail 텍스트 */
+.status-text {
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.status-text.visible {
+  opacity: 1;
+  animation: popIn 0.25s ease forwards;
+}
+
+.status-text.ok {
+  color: #FFD700;
+}
+
+.status-text.fail {
+  color: #FF3333;
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.7); }
+  60% { transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* 구분선 */
+.divider {
+  width: 80%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* PIN 행 전체 (박스들 + 눈 버튼) */
+.pin-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* PIN 4칸 */
+.pin-boxes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pin-box-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+}
+
+.pin-frame-img {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+}
+
+.pin-box-input {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 16px;
+  color: #4800FF;
+  caret-color: #4800FF;
+  text-align: center;
+}
+
+/* 눈 버튼 */
+.eye-btn {
+  position: absolute;
+  left: calc(50% + 125px);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+
+.eye-btn img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.eye-btn:hover {
+  opacity: 1;
+}
+
+/* 방 코드 — CharacterSelectPage와 동일 */
+.setup-room-code {
+  font-family: 'GalmuriMono9', monospace;
+  color: #B39EFF;
+  font-size: 14px;
+  margin-top: 20px;
+  letter-spacing: 4px;
+}
+
+/* START 버튼 */
+.setup-start-btn {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 50%;
+  margin-top: 10px;
+  margin-bottom: -6px;
+  transition: opacity 0.2s;
+}
+
+.setup-start-btn img {
+  width: 100%;
+  object-fit: contain;
+}
+
+.setup-start-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
