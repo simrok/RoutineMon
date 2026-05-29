@@ -65,6 +65,7 @@
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | maxPlayers | number | ✅ | 최대 인원 (1~5) |
+| roomName | string | ❌ | 방 이름 (기본값: "루틴몬 방") |
 
 ```json
 {
@@ -138,7 +139,7 @@
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | slotNumber | number | ✅ | 슬롯 번호 (1~5) |
-| nickname | string | ✅ | 닉네임 (최대 20자) |
+| nickname | string | ✅ | 닉네임 (한글/영문/숫자, 최대 7자) |
 | pin | string | ✅ | 숫자 4자리 |
 
 ```json
@@ -678,7 +679,7 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
 > 클라이언트는 방 입장 시 `roomCode` 기준으로 소켓 룸에 join합니다.
 
 ```js
-socket.emit('join-room', { roomCode: 'A3F9K2', playerId: 10 });
+socket.emit('join-room', { roomCode: '123456', playerId: 10 });
 ```
 
 ---
