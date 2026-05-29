@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
+import ConfirmPopup from '../components/ConfirmPopup'
 import './CharacterSelectPage.css'
 
 export default function CharacterSelectPage() {
   const navigate = useNavigate()
   const { roomCode } = useParams<{ roomCode: string }>()
-  const { room, playerColors } = useRoomStore()
+  const { room, playerColors, isHost } = useRoomStore()
 
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null)
   const [startHover, setStartHover] = useState(false)
   const [homeHover, setHomeHover] = useState(false)
+  const [showExitPopup, setShowExitPopup] = useState(false)
 
   const maxPlayers = room?.maxPlayers ?? 5
 
@@ -21,7 +23,6 @@ export default function CharacterSelectPage() {
 
   const handleStart = () => {
     if (!selectedSlot) return
-    // 나중에: 닉네임/PIN 설정 여부 확인 후 분기
     navigate(`/room/${roomCode}/setup/${selectedSlot}`)
   }
 
@@ -33,7 +34,7 @@ export default function CharacterSelectPage() {
         className="home-btn"
         onMouseEnter={() => setHomeHover(true)}
         onMouseLeave={() => setHomeHover(false)}
-        onClick={() => navigate('/')}
+        onClick={() => isHost ? setShowExitPopup(true) : navigate('/')}
       >
         <img src={homeHover ? '/assets/button/home2.png' : '/assets/button/home1.png'} alt="home" />
       </button>
@@ -130,6 +131,15 @@ export default function CharacterSelectPage() {
 
       {/* 방 코드 */}
       <p className="room-code-display">ROOM CODE: {roomCode}</p>
+
+      {/* 홈 이동 확인 팝업 */}
+      {showExitPopup && (
+        <ConfirmPopup
+          message={'나가면 방이 삭제됩니다.\n나가시겠습니까?'}
+          onYes={() => navigate('/')}
+          onNo={() => setShowExitPopup(false)}
+        />
+      )}
 
     </div>
   )
