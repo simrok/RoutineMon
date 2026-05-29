@@ -6,7 +6,7 @@ import './LandingPage.css'
 
 export default function LandingPage() {
   const navigate = useNavigate()
-  const { setRoom, setMyPlayer } = useRoomStore()
+  const { setRoom, setMyPlayer, setIsHost } = useRoomStore()
 
   const [selectedPlayers, setSelectedPlayers] = useState<number | null>(null)
   const [roomCode, setRoomCode] = useState('')
@@ -31,6 +31,7 @@ export default function LandingPage() {
         createdAt: new Date().toISOString(),
       })
       setMyPlayer(player)
+      setIsHost(true)
       navigate(`/room/${newCode}/select`)
     } catch (e) {
       console.error(e)
@@ -53,6 +54,7 @@ export default function LandingPage() {
         createdAt: new Date().toISOString(),
       })
       setMyPlayer(player)
+      setIsHost(false)
       navigate(`/room/${roomCode}/select`)
     } catch (e) {
       console.error(e)
