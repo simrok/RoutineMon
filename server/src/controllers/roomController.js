@@ -1,9 +1,9 @@
 const pool = require('../db/db');
 const bcrypt = require('bcrypt'); // 👈 팀 기술 스택인 bcrypt 라이브러리 추가!
 
-// 6자리 랜덤 방 코드 생성 함수 (숫자 + 대문자 알파벳)
+// 6자리 랜덤 방 코드 생성 함수 (숫자로만 생성하도록 변경 완!)
 const generateRoomCode = () => {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const characters = '0123456789';
   let result = '';
   for (let i = 0; i < 6; i++) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
@@ -211,13 +211,16 @@ exports.joinRoom = async (req, res) => {
         [roomId, slotNumber, nickname, pinHash]
       );
 
-      // 7. 명세서 문서와 100% 일치하는 성공 응답 반환
+      const isHost = Number(slotNumber) === 1;
+
+      // 7. 명세서 문서
       return res.status(201).json({
         success: true,
         data: {
           playerId: result.insertId,
           slotNumber: Number(slotNumber),
-          nickname: nickname
+          nickname: nickname,
+          isHost: isHost
         }
       });
 
