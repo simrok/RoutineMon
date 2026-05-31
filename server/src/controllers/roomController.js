@@ -236,3 +236,171 @@ exports.joinRoom = async (req, res) => {
     });
   }
 };
+
+// [명세서 6.1] GET /rooms/:roomCode/party-quests/active — 현재 활성 파티 퀘스트 조회
+exports.getActivePartyQuest = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+
+    // 임시로 명세서와 똑같은 규격의 가짜(Mock) 데이터를 반환해서 테스트 진행!
+    // 나중에 실제 DB 조회 로직으로 고도화
+    return res.status(200).json({
+      success: true,
+      data: {
+        partyQuestId: 7,
+        content: "빨간 지붕을 찍어라!",
+        status: "active",
+        acceptedByPlayerId: 10,
+        acceptedAt: "2026-06-01T07:05:00Z",
+        expiresAt: "2026-06-01T09:05:00Z",
+        uploads: [
+          {
+            playerId: 10,
+            imageUrl: "https://res.cloudinary.com/.../pq1.jpg",
+            validationStatus: "approved"
+          }
+        ]
+      }
+    });
+  } catch (err) {
+    console.error('❌ 활성 파티 퀘스트 조회 중 에러:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: '서버 내부 오류가 발생했습니다.'
+    });
+  }
+};
+
+// [명세서 6.4] POST /party-quests/:partyQuestId/uploads — 파티 퀘스트 사진 업로드 (테스트용)
+exports.uploadPartyQuestImage = async (req, res) => {
+  try {
+    const { partyQuestId } = req.params;
+    // form-data가 자꾸 씹히니까, 편하게 JSON Body로 playerId를 받도록 설계!
+    const { playerId } = req.body; 
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        uploadId: 33,
+        partyQuestId: Number(partyQuestId),
+        playerId: Number(playerId),
+        validationStatus: "pending",
+        message: "이미지를 검증 중입니다..."
+      }
+    });
+  } catch (err) {
+    console.error('❌ 파티 퀘스트 업로드 중 에러:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: '서버 내부 오류가 발생했습니다.'
+    });
+  }
+};
+
+// [명세서 10] POST /party-quests/:partyQuestId/simulate-complete — 파티 퀘스트 전원 완료 및 경험치 정산 시뮬레이션
+exports.simulatePartyQuestComplete = async (req, res) => {
+  try {
+    const { partyQuestId } = req.params;
+
+    // 원래는 AI 검증이 다 끝나면 실행되는 로직
+    // 퀘스트 성공 시 몬스터에게 경험치 보상(+20%)을 주고 레벨업 연산을 처리함!
+    return res.status(200).json({
+      success: true,
+      message: `🎉 [파티 퀘스트 ${partyQuestId}번] 전원 인증 완료! 루틴몬 경험치 정산 가동!`,
+      data: {
+        questStatus: "completed",
+        // 유나 소켓 명세서 규격 일치 (party-quest:completed)
+        socketEventPayload: {
+          expGained: 20, 
+          skinReward: {
+            skinId: 1,
+            name: "핑크 땡땡이 스킨"
+          }
+        },
+        // 유나 몬스터 경험치 변화 명세서 규격 일치 (mon:exp-updated)
+        monsterStatus: {
+          name: "루몬",
+          stage: "egg",
+          level: 1,
+          expPercentage: 50.0 // 원래 30%였는데 20% 더해져서 50%로 증가! 🔥
+        }
+      }
+    });
+  } catch (err) {
+    console.error('❌ 경험치 정산 시뮬레이션 중 에러:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: '서버 내부 오류가 발생했습니다.'
+    });
+  }
+};
+
+// [명세서 5.2] GET /rooms/:roomCode/daily-uploads/today — 오늘 방 전체 업로드 현황 조회
+exports.getDailyUploadStatus = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const todayStr = new Date().toISOString().split('T')[0]; // 오늘 날짜 YYYY-MM-DD 구하기
+
+    const connection = await pool.getConnection();
+
+    try {
+      // 1. 방 코드로 방 ID 조회
+      const [rooms] = await connection.query('SELECT id FROM rooms WHERE room_code = ?', [roomCode]);
+      if (rooms.length === 0) {
+        return res.status(404).json({ success: false, error: '존재하지 않는 방 코드입니다.' });
+      }
+      const roomId = rooms[0].id;
+
+      // 2. 해당 방에 참여 중인 플레이어 목록 조회
+      const [players] = await connection.query(
+        'SELECT id as playerId, nickname FROM players WHERE room_id = ?',
+        [roomId]
+      );
+
+      // 3. 각 플레이어별 오늘 업로드한 루틴 개수 파악 및 데이터 빌드
+      const playersStatus = [];
+      let totalCompletedPlayers = 0;
+
+      for (const player of players) {
+        // 이 플레이어가 오늘 업로드한 내역 조회 (실제로는 uploads 테이블 등 조회)
+        // 일단 테스트를 위해 업로드한 루틴 개수를 임시 변수로 시뮬레이션
+        const completedCount = 3; // 👈 테스트를 위해 3개 완료한 것으로 설정! (3개 이상이면 퀘스트 완료)
+        const isDailyQuestDone = completedCount >= 3;
+
+        if (isDailyQuestDone) totalCompletedPlayers++;
+
+        playersStatus.push({
+          playerId: player.playerId,
+          nickname: player.nickname,
+          uploads: [
+            { routineId: 1, imageUrl: "https://res.cloudinary.com/.../1.jpg" },
+            { routineId: 2, imageUrl: "https://res.cloudinary.com/.../2.jpg" },
+            { routineId: 3, imageUrl: "https://res.cloudinary.com/.../3.jpg" },
+            { routineId: 4, imageUrl: null }
+          ],
+          completedCount: completedCount,
+          isDailyQuestDone: isDailyQuestDone
+        });
+      }
+
+      // 4. 명세서 양식 100% 일치하는 데이터 반환
+      return res.status(200).json({
+        success: true,
+        data: {
+          date: todayStr,
+          players: playersStatus,
+          dailyQuestProgress: {
+            completedCount: totalCompletedPlayers,
+            totalCount: players.length
+          }
+        }
+      });
+
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    console.error('❌ 일일 업로드 현황 조회 중 에러:', err.message);
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  }
+};
