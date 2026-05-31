@@ -1,0 +1,363 @@
+@font-face {
+  font-family: 'GalmuriMono9';
+  src: url('/assets/fonts/GalmuriMono9.woff2') format('woff2'),
+       url('/assets/fonts/GalmuriMono9.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: initial !important;
+}
+
+.dexscreen-page {
+  width: 100vw;
+  min-height: 100vh;
+  background: #111219;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-x: hidden;
+  font-family: 'GalmuriMono9', monospace;
+}
+
+.dexscreen-phone {
+  position: relative;
+  width: 430px;
+  min-height: 720px;
+  background:
+    linear-gradient(rgba(4, 6, 40, 0.15), rgba(4, 6, 40, 0.15)),
+    url('/assets/backgroundImage/background.png');
+  background-size: cover;
+  background-position: center;
+  padding: 28px 28px 36px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.dexscreen-phone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(#ffffff 1px, transparent 1px),
+    radial-gradient(#d8caff 1px, transparent 1px);
+  background-size: 38px 38px, 61px 61px;
+  background-position: 4px 12px, 22px 32px;
+  opacity: 0.45;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.dexscreen-header,
+.dexscreen-panel,
+.dexscreen-popup-backdrop {
+  position: relative;
+  z-index: 2;
+}
+
+.dexscreen-header {
+  height: 82px;
+  display: grid;
+  grid-template-columns: 58px 1fr 58px;
+  align-items: start;
+}
+
+.dexscreen-back-btn,
+.dexscreen-home-btn {
+  width: 52px;
+  height: 52px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.dexscreen-back-btn img,
+.dexscreen-home-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.dexscreen-logo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 2px;
+}
+
+.dexscreen-logo {
+  width: 205px;
+  image-rendering: pixelated;
+}
+
+.dexscreen-logo-sub {
+  width: 145px;
+  margin-top: -3px;
+  image-rendering: pixelated;
+}
+
+/* 피그마의 연보라 도감 영역 */
+.dexscreen-panel {
+  width: 100%;
+  min-height: 520px;
+  margin-top: 8px;
+  padding: 26px 22px;
+  box-sizing: border-box;
+  background: rgba(165, 143, 231, 0.92);
+  border: 4px solid rgba(126, 94, 210, 0.9);
+}
+
+.dexscreen-title {
+  margin: 0 0 24px;
+  color: #ffffff;
+  text-align: center;
+  font-size: 23px;
+  text-shadow: 2px 2px 0 #452ca5;
+}
+
+.dexscreen-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.dexscreen-category {
+  position: relative;
+}
+
+.dexscreen-category-label {
+  display: inline-flex;
+  min-width: 76px;
+  height: 30px;
+  padding: 0 12px;
+  background: #fff1f1;
+  color: #1d1630;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  margin-left: 4px;
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 2;
+}
+
+.dexscreen-slot-row {
+  height: 66px;
+  background: rgba(42, 36, 70, 0.92);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  padding: 0 12px;
+  box-sizing: border-box;
+  gap: 6px;
+}
+
+.dexscreen-slot {
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  color: #eeeeee;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 40px;
+  line-height: 1;
+  position: relative;
+  padding: 0;
+}
+
+.dexscreen-slot-empty {
+  color: #eeeeee;
+  opacity: 0.95;
+}
+
+.dexscreen-slot-active {
+  cursor: pointer;
+}
+
+.dexscreen-slot-active img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.65));
+}
+
+.dexscreen-slot-active span {
+  position: absolute;
+  left: 0;
+  bottom: -12px;
+  width: 70px;
+  color: #ffffff;
+  font-size: 7px;
+  text-align: left;
+}
+
+.dexscreen-slot-active:hover {
+  transform: translateY(-2px);
+}
+
+.dexscreen-slot-active:hover img {
+  filter: drop-shadow(0 0 6px rgba(24, 255, 244, 0.9));
+}
+
+/* 팝업 */
+.dexscreen-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dexscreen-popup-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: #efff00;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .dexscreen-page {
+    align-items: stretch;
+  }
+
+  .dexscreen-phone {
+    width: 100vw;
+    min-height: 100vh;
+    padding: 24px 24px 34px;
+  }
+
+  .dexscreen-header {
+    grid-template-columns: 50px 1fr 50px;
+  }
+
+  .dexscreen-back-btn,
+  .dexscreen-home-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .dexscreen-logo {
+    width: 190px;
+  }
+
+  .dexscreen-panel {
+    min-height: calc(100vh - 130px);
+    padding: 24px 18px;
+  }
+
+  .dexscreen-slot-row {
+    padding: 0 8px;
+    gap: 2px;
+  }
+
+  .dexscreen-slot {
+    width: 42px;
+    height: 42px;
+    font-size: 34px;
+  }
+
+  .dexscreen-slot-active img {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.dexscreen-popup {
+  width: 320px;
+  min-height: 300px;
+  background: rgba(20, 13, 48, 0.97);
+  border: 3px solid #b69cff;
+  box-shadow: 0 0 18px rgba(182, 156, 255, 0.7);
+  padding: 24px 18px 20px;
+  box-sizing: border-box;
+  position: relative;
+  color: #ffffff;
+  text-align: center;
+}
+
+.dexscreen-popup-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: #efff00;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.dexscreen-popup-no {
+  color: #ffed7a;
+  font-size: 12px;
+  margin: 0 0 6px;
+}
+
+.dexscreen-popup-name {
+  color: #18fff4;
+  font-size: 22px;
+  margin: 0 0 18px;
+}
+
+.dexscreen-popup-stage-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.dexscreen-popup-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.dexscreen-popup-stage-img-box {
+  width: 62px;
+  height: 62px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(200, 185, 255, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dexscreen-popup-stage-img {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.dexscreen-popup-stage span {
+  color: #ffffff;
+  font-size: 10px;
+}
+
+.dexscreen-popup-desc {
+  color: #d8c9ff;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0;
+}

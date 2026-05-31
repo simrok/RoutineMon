@@ -7,6 +7,8 @@ import UploadPage from './pages/UploadPage'
 import PartyQuestPage from './pages/PartyQuestPage'
 import MonPage from './pages/MonPage'
 import RankingPage from './pages/RankingPage'
+import CharacterCustomPage from "./pages/CharacterCustomPage";
+import RoutinemonDexPage from "./pages/RoutinemonDexPage";
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
         <Route path="/room/:roomCode/party-quest" element={<PartyQuestPage />} />
         <Route path="/room/:roomCode/mon" element={<MonPage />} />
         <Route path="/room/:roomCode/ranking" element={<RankingPage />} />
+        <Route path="/custom" element={<CharacterCustomPage />} />
+        <Route path="/dex" element={<RoutinemonDexPage />} />
       </Routes>
     </BrowserRouter>
   )
