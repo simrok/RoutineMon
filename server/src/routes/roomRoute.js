@@ -43,4 +43,7 @@ router.post('/party-quests/:partyQuestId/simulate-complete', roomController.simu
 // 명세서 5.2: 오늘 일일 업로드 현황 조회
 router.get('/rooms/:roomCode/daily-uploads/today', roomController.getDailyUploadStatus);
 
+// 파티별 일일 퀘스트 업로드 현황 조회 API
+router.get('/:partyId/uploads', roomController.getPartyUploads);
+
 module.exports = router;

@@ -357,3 +357,44 @@ exports.getDailyUploadStatus = async (req, res) => {
     return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
   }
 };
+
+// [서영 전용 API] GET /:partyId/uploads — 특정 파티 퀘스트의 진짜 사진 데이터 목록 조회
+exports.getPartyUploads = async (req, res) => {
+  try {
+    const { partyId } = req.params;
+    if (!partyId) {
+      return res.status(400).json({ success: false, error: 'partyId가 필요합니다.' });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+      const [uploads] = await connection.query(
+        `SELECT 
+          pqu.id as uploadId, 
+          pqu.player_id as playerId, 
+          p.nickname as playerName, 
+          pqu.image_url as imageUrl, 
+          pqu.validation_status as status,
+          pqu.created_at as uploadedAt
+         FROM party_quest_uploads pqu
+         JOIN players p ON pqu.player_id = p.id
+         WHERE pqu.party_quest_id = ?
+         ORDER BY pqu.created_at DESC`,
+        [partyId]
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          partyQuestId: Number(partyId),
+          uploadList: uploads
+        }
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    console.error('❌ 파티 퀘스트 사진 목록 조회 DB 에러:', err.message);
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  }
+};
