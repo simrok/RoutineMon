@@ -42,7 +42,7 @@ rooms ──< players ──< routines ──< daily_uploads
 ```sql
 CREATE TABLE rooms (
   id          INT           AUTO_INCREMENT PRIMARY KEY,
-  room_code   VARCHAR(6)    NOT NULL UNIQUE,       -- 6자리 고유 코드 (ex. A3F9K2)
+  room_code   VARCHAR(6)    NOT NULL UNIQUE,       -- 6자리 숫자 코드 (ex. 123456)
   max_players TINYINT       NOT NULL DEFAULT 4,    -- 1~5
   created_at  DATETIME      DEFAULT CURRENT_TIMESTAMP
 );
@@ -64,8 +64,9 @@ CREATE TABLE players (
   id              INT           AUTO_INCREMENT PRIMARY KEY,
   room_id         INT           NOT NULL,
   slot_number     TINYINT       NOT NULL,             -- 1~5 (플레이어 슬롯 번호)
-  nickname        VARCHAR(20)   DEFAULT 'Unknown',
+  nickname        VARCHAR(7)    DEFAULT 'Unknown',
   pin_hash        VARCHAR(255)  DEFAULT NULL,         -- bcrypt 해시, 닉네임 설정 시 함께 등록
+  is_host         BOOLEAN       DEFAULT FALSE,        -- 방을 신설한 플레이어 여부
   current_skin_id INT           DEFAULT NULL,         -- 현재 적용 스킨 (NULL = 기본)
   created_at      DATETIME      DEFAULT CURRENT_TIMESTAMP,
 
@@ -80,8 +81,9 @@ CREATE TABLE players (
 | id | INT | PK |
 | room_id | INT | FK → rooms |
 | slot_number | TINYINT | 방 안의 플레이어 슬롯 번호 (1~5) |
-| nickname | VARCHAR(20) | 기본값 'Unknown', 입장 시 설정 |
+| nickname | VARCHAR(7) | 기본값 'Unknown', 입장 시 설정 (한글/영문/숫자, 최대 7자) |
 | pin_hash | VARCHAR(255) | bcrypt 해시, 닉네임 설정 시 함께 등록. 이후 재입장 시 PIN 검증에 사용 |
+| is_host | BOOLEAN | 방을 신설한 플레이어이면 TRUE. 홈 버튼 클릭 시 팝업 여부 분기에 사용 |
 | current_skin_id | INT | FK → skins, 현재 적용 중인 스킨 |
 
 > **Note:** 방이 삭제되면 players도 CASCADE 삭제됨
@@ -342,6 +344,7 @@ CREATE TABLE exp_logs (
 | 파티 퀘스트 생성 | 매일 01:00 / 07:00 / 13:00 / 19:00 | 모든 active 방에 party_quests 레코드 생성 |
 | 파티 퀘스트 만료 처리 | 매 5분 | expires_at 지난 active 퀘스트 → status = 'failed' |
 | 오래된 데이터 삭제 | 매일 00:00 | upload_date < 오늘-3일인 daily_uploads 삭제 |
+| 비활성 방 자동 삭제 | 매 10분 | 생성 후 10분 이상 플레이어가 0명인 방 삭제 |
 
 ---
 

@@ -19,12 +19,15 @@ interface RoomStore {
   players: Player[]
   // 슬롯별 캐릭터 색상 (사용자가 바꾸면 업데이트됨)
   playerColors: { [slot: number]: string }
+  // 방장 여부 (방 신설 시 true, 방 코드 입력 참여 시 false)
+  isHost: boolean
 
   // 액션
   setRoom: (room: Room) => void
   setMyPlayer: (player: Player) => void
   setPlayers: (players: Player[]) => void
   setPlayerColor: (slot: number, color: string) => void
+  setIsHost: (isHost: boolean) => void
   reset: () => void
 }
 
@@ -33,6 +36,7 @@ export const useRoomStore = create<RoomStore>((set) => ({
   myPlayer: null,
   players: [],
   playerColors: { ...DEFAULT_PLAYER_COLORS },
+  isHost: false,
 
   setRoom: (room) => set({ room }),
   setMyPlayer: (player) => set({ myPlayer: player }),
@@ -41,11 +45,13 @@ export const useRoomStore = create<RoomStore>((set) => ({
     set((state) => ({
       playerColors: { ...state.playerColors, [slot]: color },
     })),
+  setIsHost: (isHost) => set({ isHost }),
   reset: () =>
     set({
       room: null,
       myPlayer: null,
       players: [],
       playerColors: { ...DEFAULT_PLAYER_COLORS },
+      isHost: false,
     }),
 }))
