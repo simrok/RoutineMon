@@ -6,7 +6,8 @@ const roomRoute = require('./src/routes/roomRoute');
 const routineRoute = require('./src/routes/routineRoute');
 const monsterRoute = require('./src/routes/monsterRoute');
 const rankingRoute = require('./src/routes/rankingRoute');
-const uploadRoute = require('./src/routes/uploadRoute'); // 👈 업로드 라우터 추가!
+const uploadRoute = require('./src/routes/uploadRoute');
+const partyQuestRoute = require('./src/routes/partyQuestRoute'); // 👈 파티 퀘스트 라우터 추가!
 
 const app = express();
 
@@ -17,7 +18,8 @@ app.use('/api', roomRoute);
 app.use('/api', routineRoute);
 app.use('/api', monsterRoute);        
 app.use('/api', rankingRoute);        
-app.use('/api', uploadRoute);         // 👈 업로드 라우터 등록!
+app.use('/api', uploadRoute);         
+app.use('/api', partyQuestRoute);    // 👈 파티 퀘스트 라우터 등록!
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, status: 'OK', timestamp: new Date().toISOString() });
