@@ -2,7 +2,7 @@ const pool = require('../db/db');
 
 // [명세서 5.1] POST /uploads/daily — 일일 루틴 사진 업로드 및 인증
 exports.uploadDailyRoutine = async (req, res) => {
-  try {
+
     const { playerId, routineId, imageUrl } = req.body;
 
     // 1. 필수 파라미터 누락 검증
@@ -11,6 +11,7 @@ exports.uploadDailyRoutine = async (req, res) => {
     }
 
     const connection = await pool.getConnection();
+
     try {
       // 2. 해당 플레이어와 루틴이 유효한지 검증 및 방 코드(room_code) 함께 조회
       const [routineRows] = await connection.query(`
@@ -27,7 +28,17 @@ exports.uploadDailyRoutine = async (req, res) => {
 
       const roomId = routineRows[0].room_id;
       const roomCode = routineRows[0].room_code;
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD 포맷 변환
+
+      const kstDate = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
+      const today = kstDate.toISOString().split('T')[0];
+
+      const [duplicateCheck] = await connection.query(
+        'SELECT id FROM daily_uploads WHERE player_id = ? AND routine_id = ? AND upload_date = ?',
+        [playerId, routineId, today]
+      );
+      if (duplicateCheck.length > 0) {
+        return res.status(400).json({ success: false, error: '오늘 이미 인증을 완료한 루틴입니다.' });
+      }
 
       await connection.beginTransaction();
 
@@ -70,12 +81,12 @@ exports.uploadDailyRoutine = async (req, res) => {
 
         // (B) 오늘 3개 이상 업로드하여 자기 몫을 다한 '서로 다른 플레이어 수' 집계
         const [progressRows] = await connection.query(`
-          SELECT COUNT(DISTINCT player_id) AS completedPlayersCount
+          SELECT player_id
           FROM daily_uploads
           WHERE player_id IN (SELECT id FROM players WHERE room_id = ?)
             AND upload_date = ?
           GROUP BY player_id
-          HAVING COUNT(id) >= 3
+          HAVING COUNT(DISTINCT routine_id) >= 3
         `, [roomId, today]);
 
         const completedPlayersCount = progressRows.length;
@@ -102,6 +113,7 @@ exports.uploadDailyRoutine = async (req, res) => {
               let currentExp = Number(mon.exp_percentage || 0);
               let currentLevel = Number(mon.level || 1);
               let currentStage = mon.stage || 'EGG';
+              let nextCatalogId = mon.catalog_id;
 
               let newExp = currentExp + expGained;
 
@@ -119,13 +131,14 @@ exports.uploadDailyRoutine = async (req, res) => {
                   else if (currentStage === 'ADULT') {
                     // 기획서 반영: ADULT LV2 100% 달성 시 새로운 알(EGG)로 순환
                     currentStage = 'EGG';
+                    nextCatalogId = null;
                   }
                   
                   // 진화 성공 시 소켓 이벤트 브로드캐스트
                   if (io) {
                     io.to(roomCode).emit('mon:evolved', {
                       newStage: currentStage,
-                      catalogId: mon.catalog_id,
+                      catalogId: nextCatalogId,
                       name: '루틴몬'
                     });
                   }
@@ -134,8 +147,8 @@ exports.uploadDailyRoutine = async (req, res) => {
 
               // 몬스터 상태값 DB 업데이트
               await connection.query(
-                'UPDATE mons SET level = ?, stage = ?, exp_percentage = ? WHERE room_id = ?',
-                [currentLevel, currentStage, newExp.toFixed(2), roomId]
+                'UPDATE mons SET level = ?, stage = ?, exp_percentage = ?, catalog_id = ? WHERE room_id = ?',
+                [currentLevel, currentStage, newExp.toFixed(2), nextCatalogId, roomId]
               );
 
               // DB 테이블 규격: 경험치 로그 기록 적재
@@ -187,7 +200,4 @@ exports.uploadDailyRoutine = async (req, res) => {
     } finally {
       connection.release();
     }
-  } catch (err) {
-    return res.status(500).json({ success: false, error: '서버 내부 오류 발생' });
-  }
 };
