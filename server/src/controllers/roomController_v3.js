@@ -15,11 +15,6 @@ const generateRoomCode = () => {
 // 방 생성
 // ==========================================
 exports.createRoom = async (req, res) => {
-
-  const connection = await pool.getConnection();
-
-  try {
-
     const { maxPlayers } = req.body;
 
     // ==========================================
@@ -39,6 +34,8 @@ exports.createRoom = async (req, res) => {
       });
     }
 
+    const connection = await pool.getConnection();
+    try {
     await connection.beginTransaction();
 
     let roomCode = '';
@@ -128,16 +125,13 @@ exports.createRoom = async (req, res) => {
     });
 
   } catch (err) {
-
     await connection.rollback();
-
+    console.error('방 생성 중 오류 발생:', err);
+    
     return res.status(500).json({
-      success: false,
-      error: '서버 내부 오류 발생'
+      success: false, error: '방을 생성하는 도중 서버 오류가 발생했습니다.'
     });
-
   } finally {
-
     connection.release();
   }
 };
