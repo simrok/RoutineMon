@@ -24,8 +24,8 @@ const routinemons: Routinemon[] = [
     stages: [
       { label: '알', image: '/assets/routinemon/egg.png' },
       { label: '아기', image: '/assets/routinemon/cat/cat1.png' },
-      { label: '아이', image: '/assets/routinemon/cat/cat2.png' },
-      { label: '어른', image: '/assets/routinemon/cat/cat3.png' },
+      { label: '어린이', image: '/assets/routinemon/cat/cat2.png' },
+      { label: '어른이', image: '/assets/routinemon/cat/cat3.png' },
     ],
   },
   {
@@ -36,8 +36,8 @@ const routinemons: Routinemon[] = [
     stages: [
       { label: '알', image: '/assets/routinemon/egg.png' },
       { label: '아기', image: '/assets/routinemon/dino/dino1.png' },
-      { label: '아이', image: '/assets/routinemon/dino/dino2.png' },
-      { label: '어른', image: '/assets/routinemon/dino/dino3.png' },
+      { label: '어린이', image: '/assets/routinemon/dino/dino2.png' },
+      { label: '어른이', image: '/assets/routinemon/dino/dino3.png' },
     ],
   },
   {
@@ -48,8 +48,8 @@ const routinemons: Routinemon[] = [
     stages: [
       { label: '알', image: '/assets/routinemon/egg.png' },
       { label: '아기', image: '/assets/routinemon/panda/panda1.png' },
-      { label: '아이', image: '/assets/routinemon/panda/panda2.png' },
-      { label: '어른', image: '/assets/routinemon/panda/panda3.png' },
+      { label: '어린이', image: '/assets/routinemon/panda/panda2.png' },
+      { label: '어른이', image: '/assets/routinemon/panda/panda3.png' },
     ],
   },
 ]

@@ -6,21 +6,9 @@
   font-style: normal;
 }
 
-body {
-  margin: 0;
-}
-
-#root {
-  width: 100% !important;
-  max-width: none !important;
-  min-height: 100vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  text-align: initial !important;
-}
 
 .dexscreen-page {
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
   background: #111219;
   display: flex;
@@ -33,7 +21,7 @@ body {
 .dexscreen-phone {
   position: relative;
   width: 430px;
-  min-height: 720px;
+  min-height: 100vh;
   background:
     linear-gradient(rgba(4, 6, 40, 0.15), rgba(4, 6, 40, 0.15)),
     url('/assets/backgroundImage/background.png');
@@ -111,8 +99,8 @@ body {
 /* 피그마의 연보라 도감 영역 */
 .dexscreen-panel {
   width: 100%;
-  min-height: 520px;
-  margin-top: 8px;
+  min-height: 630px;
+  margin-top: 20px;
   padding: 26px 22px;
   box-sizing: border-box;
   background: rgba(165, 143, 231, 0.92);
@@ -123,8 +111,10 @@ body {
   margin: 0 0 24px;
   color: #ffffff;
   text-align: center;
-  font-size: 23px;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 25px;
   text-shadow: 2px 2px 0 #452ca5;
+  margin-bottom: 30px;
 }
 
 .dexscreen-category-list {
@@ -139,22 +129,22 @@ body {
 
 .dexscreen-category-label {
   display: inline-flex;
-  min-width: 76px;
-  height: 30px;
+  min-width: 90px;
+  height: 40px;
   padding: 0 12px;
-  background: #fff1f1;
-  color: #1d1630;
+  background: #ffffffc7;
+  color: #4800FF;
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  margin-left: 4px;
-  margin-bottom: -1px;
+  margin-left: 0px;
+  margin-bottom: 0px;
   position: relative;
   z-index: 2;
 }
 
 .dexscreen-slot-row {
-  height: 66px;
+  height: 100px;
   background: rgba(42, 36, 70, 0.92);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -178,6 +168,7 @@ body {
   line-height: 1;
   position: relative;
   padding: 0;
+  justify-self: center;
 }
 
 .dexscreen-slot-empty {
@@ -190,20 +181,21 @@ body {
 }
 
 .dexscreen-slot-active img {
-  width: 44px;
-  height: 44px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.65));
+  margin-bottom: 10px;
 }
 
 .dexscreen-slot-active span {
   position: absolute;
-  left: 0;
+  left: 6px;
   bottom: -12px;
   width: 70px;
   color: #ffffff;
-  font-size: 7px;
+  font-size: 11px;
   text-align: left;
 }
 
