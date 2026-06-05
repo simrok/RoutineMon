@@ -9,6 +9,7 @@ import MonPage from './pages/MonPage'
 import RankingPage from './pages/RankingPage'
 import CharacterCustomPage from "./pages/CharacterCustomPage";
 import RoutinemonDexPage from "./pages/RoutinemonDexPage";
+import LogCreatePage from './pages/LogCreatePage'
 
 function App() {
   return (
@@ -22,8 +23,11 @@ function App() {
         <Route path="/room/:roomCode/party-quest" element={<PartyQuestPage />} />
         <Route path="/room/:roomCode/mon" element={<MonPage />} />
         <Route path="/room/:roomCode/ranking" element={<RankingPage />} />
+        {/*TEST*/}
         <Route path="/custom" element={<CharacterCustomPage />} />
         <Route path="/dex" element={<RoutinemonDexPage />} />
+        <Route path="/upload" element={<UploadPage />} />
+        <Route path="/LogCreatePage" element={<LogCreatePage />} />
       </Routes>
     </BrowserRouter>
   )
