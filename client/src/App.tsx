@@ -38,7 +38,7 @@ function App() {
         <Route path="/custom" element={<CharacterCustomPage />} />
         <Route path="/dex" element={<RoutinemonDexPage />} />
         <Route path="/upload" element={<UploadPage />} />
-        <Route path="/LogCreatePage" element={<LogCreatePage />} />
+        <Route path="/log-create" element={<LogCreatePage />} />
       </Routes>
     </BrowserRouter>
   )
