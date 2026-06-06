@@ -103,6 +103,14 @@ export default function LogCreatePage() {
             <img className="logcreate-logo-sub" src="/assets/logo/low.png" alt="subtitle" />
           </div>
 
+          <button className="logcreate-question-btn">
+            <img src="/assets/button/question.png" alt="question" />
+          </button>
+
+          <button className="logcreate-back-btn" onClick={() => navigate(-1)}>
+            <img src="/assets/button/previous.png" alt="back" />
+          </button>
+
           <button
             className="logcreate-home-btn"
             onMouseEnter={() => setHomeHover(true)}
@@ -185,7 +193,7 @@ export default function LogCreatePage() {
             <img
               src={
                 downloadHover
-                  ? '/assets/button/download2.png'
+                  ? '/assets/button/download_2.png'
                   : '/assets/button/download1.png'
               }
               alt="download"
