@@ -76,6 +76,19 @@ export default function RoutinemonDexPage() {
     <div className="dexscreen-page">
       <div className="dexscreen-phone">
         {/* 상단 */}
+        {/* 홈 버튼 */}
+        <button
+          className="dexscreen-home-btn"
+          onMouseEnter={() => setHomeHover(true)}
+          onMouseLeave={() => setHomeHover(false)}
+          onClick={() => navigate('/')}
+        >
+          <img
+            src={homeHover ? '/assets/button/home2.png' : '/assets/button/home1.png'}
+            alt="home"
+          />
+        </button>
+
         <header className="dexscreen-header">
           <button className="dexscreen-back-btn" onClick={() => navigate(-1)}>
             <img src="/assets/button/previous.png" alt="back" />
@@ -86,17 +99,7 @@ export default function RoutinemonDexPage() {
             <img className="dexscreen-logo-sub" src="/assets/logo/low.png" alt="subtitle" />
           </div>
 
-          <button
-            className="dexscreen-home-btn"
-            onMouseEnter={() => setHomeHover(true)}
-            onMouseLeave={() => setHomeHover(false)}
-            onClick={() => navigate('/')}
-          >
-            <img
-              src={homeHover ? '/assets/button/home2.png' : '/assets/button/home1.png'}
-              alt="home"
-            />
-          </button>
+          <div />
         </header>
 
         {/* 도감 패널 */}

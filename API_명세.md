@@ -158,13 +158,10 @@
   "data": {
     "playerId": 11,
     "slotNumber": 2,
-    "nickname": "민지",
-    "isHost": false
+    "nickname": "민지"
   }
 }
 ```
-
-> `isHost`: 방을 신설한 첫 번째 플레이어이면 `true`, 방 코드로 참여한 플레이어이면 `false`
 
 **에러**
 - `409` — 해당 슬롯이 이미 사용 중

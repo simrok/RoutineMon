@@ -1,5 +1,4 @@
 const pool = require('../db/db');
-const bcrypt = require('bcrypt');
 
 // 6자리 랜덤 방 코드 생성 함수
 const generateRoomCode = () => {
@@ -118,53 +117,6 @@ exports.createRoom = async (req, res) => {
     }
   } catch (err) {
     console.error('❌ 방 생성 중 서버 에러:', err.message);
-    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
-  }
-};
-
-// [명세서 3] POST /rooms/:roomCode/players — 플레이어 슬롯 등록
-exports.joinRoom = async (req, res) => {
-  try {
-    const { roomCode } = req.params;
-    const { slotNumber, nickname, pin } = req.body;
-
-    if (!slotNumber || !nickname || !pin) {
-      return res.status(400).json({ success: false, error: '슬롯 번호, 닉네임, PIN 번호는 필수 입력 사항입니다.' });
-    }
-
-    const connection = await pool.getConnection();
-    try {
-      const [rooms] = await connection.query('SELECT id, max_players FROM rooms WHERE room_code = ?', [roomCode]);
-      if (rooms.length === 0) return res.status(404).json({ success: false, error: '존재하지 않는 방 코드입니다.' });
-
-      const roomId = rooms[0].id;
-      const maxPlayers = rooms[0].max_players;
-
-      if (slotNumber < 1 || slotNumber > maxPlayers) {
-        return res.status(400).json({ success: false, error: `슬롯 번호는 1에서 ${maxPlayers} 사이여야 합니다.` });
-      }
-
-      const [existingPlayer] = await connection.query(
-        'SELECT id FROM players WHERE room_id = ? AND slot_number = ?',
-        [roomId, slotNumber]
-      );
-      if (existingPlayer.length > 0) return res.status(409).json({ success: false, error: '해당 슬롯이 이미 사용 중' });
-
-      const pinHash = await bcrypt.hash(pin, 10);
-      const [result] = await connection.query(
-        'INSERT INTO players (room_id, slot_number, nickname, pin_hash) VALUES (?, ?, ?, ?)',
-        [roomId, slotNumber, nickname, pinHash]
-      );
-
-      return res.status(201).json({
-        success: true,
-        data: { playerId: result.insertId, slotNumber: Number(slotNumber), nickname, isHost: Number(slotNumber) === 1 }
-      });
-    } finally {
-      connection.release();
-    }
-  } catch (err) {
-    console.error('❌ 플레이어 입장 중 서버 에러:', err.message);
     return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
   }
 };

@@ -28,9 +28,6 @@ router.post('/rooms', roomController.createRoom);
 // 명세서 2: GET /rooms/:roomCode — 방 정보 조회
 router.get('/rooms/:roomCode', roomController.getRoomStatus);
 
-// 명세서 3: POST /rooms/:roomCode/players — 플레이어 슬롯 등록
-router.post('/rooms/:roomCode/players', roomController.joinRoom);
-
 // 명세서 5.1: GET /rooms/:roomCode/party-quests/active — 활성 파티 퀘스트 조회
 router.get('/rooms/:roomCode/party-quests/active', roomController.getActivePartyQuest);
 

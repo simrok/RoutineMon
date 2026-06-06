@@ -106,20 +106,6 @@ exports.registerPlayer = async (req, res) => {
       });
     }
 
-    // host 판별
-    // FOR UPDATE로 동시성 방지
-    const [countRows] = await connection.query(
-      `
-      SELECT COUNT(*) AS total
-      FROM players
-      WHERE room_id = ?
-      FOR UPDATE
-      `,
-      [room.id]
-    );
-
-    const isHost = countRows[0].total === 0;
-
     // PIN 해싱
     const pinHash = await bcrypt.hash(pin, 10);
 
@@ -131,17 +117,15 @@ exports.registerPlayer = async (req, res) => {
         room_id,
         slot_number,
         nickname,
-        pin_hash,
-        is_host
+        pin_hash
       )
-      VALUES (?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?)
       `,
       [
         room.id,
         slotNumber,
         nickname,
-        pinHash,
-        isHost
+        pinHash
       ]
     );
 
@@ -152,8 +136,7 @@ exports.registerPlayer = async (req, res) => {
       data: {
         playerId: insertResult.insertId,
         slotNumber: Number(slotNumber),
-        nickname,
-        isHost
+        nickname
       }
     });
 

@@ -61,22 +61,39 @@
   align-items: start;
 }
 
-.customscreen-back-btn,
-.customscreen-home-btn {
-  width: 52px;
-  height: 52px;
+.customscreen-back-btn {
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
   padding: 0;
   cursor: pointer;
 }
 
-.customscreen-back-btn img,
-.customscreen-home-btn img {
+.customscreen-back-btn img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
+}
+
+.customscreen-home-btn {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.customscreen-home-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .customscreen-logo-area {
@@ -318,10 +335,9 @@
     grid-template-columns: 50px 1fr 50px;
   }
 
-  .customscreen-back-btn,
-  .customscreen-home-btn {
-    width: 48px;
-    height: 48px;
+  .customscreen-back-btn {
+    width: 32px;
+    height: 32px;
   }
 
   .customscreen-logo {

@@ -60,22 +60,39 @@
   align-items: start;
 }
 
-.dexscreen-back-btn,
-.dexscreen-home-btn {
-  width: 52px;
-  height: 52px;
+.dexscreen-back-btn {
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
   padding: 0;
   cursor: pointer;
 }
 
-.dexscreen-back-btn img,
-.dexscreen-home-btn img {
+.dexscreen-back-btn img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
+}
+
+.dexscreen-home-btn {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.dexscreen-home-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .dexscreen-logo-area {
@@ -104,7 +121,6 @@
   padding: 26px 22px;
   box-sizing: border-box;
   background: rgba(165, 143, 231, 0.92);
-  border: 4px solid rgba(126, 94, 210, 0.9);
 }
 
 .dexscreen-title {
@@ -243,10 +259,9 @@
     grid-template-columns: 50px 1fr 50px;
   }
 
-  .dexscreen-back-btn,
-  .dexscreen-home-btn {
-    width: 48px;
-    height: 48px;
+  .dexscreen-back-btn {
+    width: 32px;
+    height: 32px;
   }
 
   .dexscreen-logo {

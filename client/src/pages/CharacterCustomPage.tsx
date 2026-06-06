@@ -88,6 +88,19 @@ export default function CharacterCustomPage() {
     <div className="customscreen-page">
       <div className="customscreen-phone">
         {/* 상단 */}
+        {/* 홈 버튼 */}
+        <button
+          className="customscreen-home-btn"
+          onMouseEnter={() => setHomeHover(true)}
+          onMouseLeave={() => setHomeHover(false)}
+          onClick={() => navigate('/')}
+        >
+          <img
+            src={homeHover ? '/assets/button/home2.png' : '/assets/button/home1.png'}
+            alt="home"
+          />
+        </button>
+
         <header className="customscreen-header">
           <button className="customscreen-back-btn" onClick={() => navigate(-1)}>
             <img src="/assets/button/previous.png" alt="back" />
@@ -98,17 +111,7 @@ export default function CharacterCustomPage() {
             <img className="customscreen-logo-sub" src="/assets/logo/low.png" alt="subtitle" />
           </div>
 
-          <button
-            className="customscreen-home-btn"
-            onMouseEnter={() => setHomeHover(true)}
-            onMouseLeave={() => setHomeHover(false)}
-            onClick={() => navigate('/')}
-          >
-            <img
-              src={homeHover ? '/assets/button/home2.png' : '/assets/button/home1.png'}
-              alt="home"
-            />
-          </button>
+          <div />
         </header>
 
         {/* 메인 박스 */}
