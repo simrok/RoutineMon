@@ -1,0 +1,258 @@
+@font-face {
+  font-family: 'GalmuriMono9';
+  src: url('/assets/fonts/GalmuriMono9.woff2') format('woff2'),
+       url('/assets/fonts/GalmuriMono9.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.logcreate-page {
+  width: 100vw;
+  min-height: 100vh;
+  background: #111219;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-x: hidden;
+  font-family: 'GalmuriMono9', monospace;
+}
+
+.logcreate-board {
+  position: relative;
+  width: 430px;
+  min-height: 760px;
+  background:
+    linear-gradient(rgba(4, 6, 40, 0.08), rgba(4, 6, 40, 0.08)),
+    url('/assets/backgroundImage/background.png');
+  background-size: cover;
+  background-position: center;
+  padding: 28px 14px 36px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.logcreate-board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(#ffffff 1px, transparent 1px),
+    radial-gradient(#d8caff 1px, transparent 1px);
+  background-size: 38px 38px, 61px 61px;
+  background-position: 4px 12px, 22px 32px;
+  opacity: 0.35;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.logcreate-header,
+.logcreate-content {
+  position: relative;
+  z-index: 2;
+}
+
+.logcreate-header {
+  height: 120px;
+  position: relative;
+}
+
+.logcreate-logo-area {
+  position: absolute;
+  top: 10px;
+  left: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.logcreate-logo {
+  width: 180px;
+  image-rendering: pixelated;
+}
+
+.logcreate-logo-sub {
+  width: 126px;
+  margin-top: -4px;
+  margin-left: 52px;
+  image-rendering: pixelated;
+}
+
+.logcreate-home-btn {
+  position: absolute;
+  top: -2px;
+  right: 18px;
+  width: 64px;
+  height: 64px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.logcreate-home-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.logcreate-content {
+  margin-top: 18px;
+}
+
+.logcreate-card {
+  width: 400px;
+  min-height: 492px;
+  margin: 0 auto;
+  background: #b39cff;
+  padding: 30px 15px 18px;
+  box-sizing: border-box;
+}
+
+.logcreate-card-logo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.logcreate-card-logo {
+  width: 230px;
+  image-rendering: pixelated;
+}
+
+.logcreate-card-logo-sub {
+  width: 150px;
+  margin-top: -4px;
+  image-rendering: pixelated;
+}
+
+.logcreate-member-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.logcreate-member {
+  height: 74px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.logcreate-member img {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.logcreate-member span {
+  margin-top: 1px;
+  color: #ffffff;
+  font-size: 15px;
+  text-shadow:
+    1px 1px 0 #7d5cff,
+    -1px 1px 0 #7d5cff,
+    1px -1px 0 #7d5cff,
+    -1px -1px 0 #7d5cff;
+}
+
+.logcreate-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+
+.logcreate-cell {
+  width: 70px;
+  height: 67px;
+  background: #ffffff;
+  border: 4px solid #7654d9;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.logcreate-uploaded-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.logcreate-empty-cell {
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, #c9c9c9 25%, transparent 25%),
+    linear-gradient(-45deg, #c9c9c9 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #c9c9c9 75%),
+    linear-gradient(-45deg, transparent 75%, #c9c9c9 75%);
+  background-size: 14px 14px;
+  background-position:
+    0 0,
+    0 7px,
+    7px -7px,
+    -7px 0;
+}
+
+.logcreate-black-cell {
+  background-color: #121212;
+  background-image:
+    linear-gradient(45deg, #2e2e2e 25%, transparent 25%),
+    linear-gradient(-45deg, #2e2e2e 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2e2e2e 75%),
+    linear-gradient(-45deg, transparent 75%, #2e2e2e 75%);
+}
+
+.logcreate-white {
+  border-color: #ffffff;
+}
+
+.logcreate-blue {
+  border-color: #14e8ff;
+}
+
+.logcreate-green {
+  border-color: #00e78c;
+}
+
+.logcreate-yellow {
+  border-color: #fff700;
+}
+
+.logcreate-pink {
+  border-color: #ff72ed;
+}
+
+.logcreate-date {
+  margin: 16px 6px 0 0;
+  color: #ffffff;
+  font-size: 12px;
+  text-align: right;
+  text-shadow:
+    1px 1px 0 #7d5cff,
+    -1px 1px 0 #7d5cff,
+    1px -1px 0 #7d5cff,
+    -1px -1px 0 #7d5cff;
+}
+
+.logcreate-download-btn {
+  display: block;
+  width: 170px;
+  height: 60px;
+  margin: 42px auto 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.logcreate-download-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}

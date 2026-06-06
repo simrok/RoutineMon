@@ -1,0 +1,521 @@
+@font-face {
+  font-family: 'GalmuriMono9';
+  src: url('/assets/fonts/GalmuriMono9.woff2') format('woff2'),
+       url('/assets/fonts/GalmuriMono9.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: initial !important;
+}
+
+.uploadscreen-page {
+  width: 100vw;
+  min-height: 100vh;
+  background: #111219;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-x: hidden;
+  font-family: 'GalmuriMono9', monospace;
+}
+
+/* CUSTOM / DEX와 같은 모바일 화면 크기 */
+.uploadscreen-board {
+  position: relative;
+  width: 430px;
+  min-height: 760px;
+  background:
+    linear-gradient(rgba(4, 6, 40, 0.1), rgba(4, 6, 40, 0.1)),
+    url('/assets/backgroundImage/background.png');
+  background-size: cover;
+  background-position: center;
+  padding: 28px 28px 38px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.uploadscreen-board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(#ffffff 1px, transparent 1px),
+    radial-gradient(#d8caff 1px, transparent 1px);
+  background-size: 38px 38px, 61px 61px;
+  background-position: 4px 12px, 22px 32px;
+  opacity: 0.45;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.uploadscreen-header,
+.uploadscreen-top-buttons,
+.uploadscreen-dots-row,
+.uploadscreen-player-list,
+.uploadscreen-popup-backdrop {
+  position: relative;
+  z-index: 2;
+}
+
+/* 상단: 피그마 위치 */
+.uploadscreen-header {
+  height: 112px;
+  position: relative;
+}
+
+.uploadscreen-logo-area {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.uploadscreen-logo {
+  width: 188px;
+  image-rendering: pixelated;
+}
+
+.uploadscreen-logo-sub {
+  width: 130px;
+  margin-top: -4px;
+  margin-left: 53px;
+  image-rendering: pixelated;
+}
+
+.uploadscreen-question-btn,
+.uploadscreen-back-btn,
+.uploadscreen-home-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  position: absolute;
+}
+
+.uploadscreen-question-btn {
+  top: 5px;
+  left: 190px;
+  width: 34px;
+  height: 34px;
+}
+
+.uploadscreen-question-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.uploadscreen-back-btn {
+  top: 0;
+  right: 60px;
+  width: 52px;
+  height: 52px;
+}
+
+.uploadscreen-home-btn {
+  top: -4px;
+  right: 0;
+  width: 58px;
+  height: 58px;
+}
+
+.uploadscreen-back-btn img,
+.uploadscreen-home-btn img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* 상단 버튼 */
+.uploadscreen-top-buttons {
+  display: grid;
+  grid-template-columns: 128px 88px 88px;
+  column-gap: 24px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.uploadscreen-create-btn,
+.uploadscreen-daily-btn,
+.uploadscreen-party-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.uploadscreen-create-btn {
+  width: 128px;
+  height: 38px;
+}
+
+.uploadscreen-daily-btn,
+.uploadscreen-party-btn {
+  width: 88px;
+  height: 38px;
+}
+
+.uploadscreen-create-btn img,
+.uploadscreen-daily-btn img,
+.uploadscreen-party-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* 점 */
+.uploadscreen-dots-row {
+  display: grid;
+  grid-template-columns: 128px 88px 88px;
+  column-gap: 24px;
+  margin-bottom: 13px;
+}
+
+.uploadscreen-dots {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+}
+
+.uploadscreen-dots i {
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: block;
+}
+
+.uploadscreen-dots i.active {
+  background: #b9a0ff;
+}
+
+/* 플레이어 리스트 */
+.uploadscreen-player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.uploadscreen-player-row {
+  display: grid;
+  grid-template-columns: 128px 88px 88px;
+  column-gap: 24px;
+  align-items: center;
+}
+
+.uploadscreen-player-info {
+  position: relative;
+  height: 92px;
+}
+
+.uploadscreen-player-img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  position: absolute;
+  left: -20px;
+  top: -10px;
+}
+
+.uploadscreen-player-name {
+  position: absolute;
+  left: 28px;
+  top: 80px;
+  font-size: 15px;
+  text-align: center;
+}
+
+.uploadscreen-speech-wrap {
+  position: absolute;
+  left: 70px;
+  top: -2px;
+  width: 78px;
+  height: 42px;
+}
+
+.uploadscreen-speech-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.uploadscreen-speech-wrap span {
+  position: absolute;
+  inset: 0;
+  color: #4a32c8;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 5px;
+}
+
+/* 업로드 칸 */
+.uploadscreen-upload-slot,
+.uploadscreen-party-slot {
+  width: 88px;
+  height: 92px;
+  background: #ffffff;
+  border: 4px solid #7654d9;
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+}
+
+.uploadscreen-party-slot {
+  background: #b7b7b7;
+  cursor: default;
+}
+
+.uploadscreen-white {
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.uploadscreen-blue {
+  border-color: #14e8ff;
+  color: #14e8ff;
+}
+
+.uploadscreen-green {
+  border-color: #00e78c;
+  color: #00e78c;
+}
+
+.uploadscreen-yellow {
+  border-color: #fff700;
+  color: #fff700;
+}
+
+.uploadscreen-red {
+  border-color: #ff1b14;
+  color: #ff1b14;
+}
+
+.uploadscreen-add-icon {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.uploadscreen-uploaded-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.uploadscreen-upload-time {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  right: 0;
+  color: #ffffff;
+  text-shadow:
+    1px 1px 0 #4d27ff,
+    -1px 1px 0 #4d27ff,
+    1px -1px 0 #4d27ff,
+    -1px -1px 0 #4d27ff;
+  font-size: 16px;
+  text-align: center;
+}
+
+.uploadscreen-star {
+  position: absolute;
+  right: 3px;
+  bottom: 0;
+  color: #18fff4;
+  font-size: 22px;
+}
+
+/* 팝업 */
+.uploadscreen-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.uploadscreen-daily-popup,
+.uploadscreen-upload-popup {
+  width: 310px;
+  background: rgba(168, 245, 188, 0.96);
+  border: 4px solid #8f6cff;
+  padding: 18px 16px;
+  box-sizing: border-box;
+  color: #180e2b;
+  text-align: center;
+}
+
+.uploadscreen-daily-popup h2,
+.uploadscreen-upload-popup h2 {
+  font-size: 15px;
+  margin: 0 0 16px;
+}
+
+.uploadscreen-daily-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.uploadscreen-daily-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 8px;
+  text-align: left;
+  align-items: start;
+}
+
+.uploadscreen-daily-name {
+  color: #4a32c8;
+  font-size: 11px;
+}
+
+.uploadscreen-daily-routines {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px 8px;
+  font-size: 9px;
+  color: #111;
+}
+
+.uploadscreen-popup-yes-btn {
+  margin-top: 14px;
+  width: 54px;
+  height: 24px;
+  border: 2px solid #8f6cff;
+  background: #f6c6ff;
+  font-family: 'GalmuriMono9', monospace;
+  cursor: pointer;
+}
+
+.uploadscreen-routine-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.uploadscreen-routine-select-btn {
+  height: 34px;
+  border: 2px solid #d78cff;
+  background: #df82e9;
+  color: white;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  font-family: 'GalmuriMono9', monospace;
+  cursor: pointer;
+}
+
+.uploadscreen-routine-select-btn p {
+  margin: 0;
+  font-size: 10px;
+  text-align: left;
+}
+
+.uploadscreen-routine-selected {
+  background: #4800ff;
+  border-color: #ffffff;
+}
+
+.uploadscreen-file-label {
+  display: inline-flex;
+  width: 112px;
+  height: 28px;
+  justify-content: center;
+  align-items: center;
+  background: #f2eaff;
+  border: 2px solid #8f6cff;
+  color: #180e2b;
+  font-size: 11px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.uploadscreen-file-label input {
+  display: none;
+}
+
+.uploadscreen-preview-box {
+  width: 110px;
+  height: 90px;
+  margin: 0 auto 12px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid #8f6cff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 9px;
+}
+
+.uploadscreen-preview-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.uploadscreen-upload-btn {
+  width: 88px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.uploadscreen-upload-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.uploadscreen-popup-actions {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+}
+
+.uploadscreen-popup-actions button {
+  width: 52px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.uploadscreen-popup-actions img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
