@@ -26,11 +26,6 @@ function App() {
         <Route path="/room/:roomCode/custom/:playerId" element={<CharacterCustomPage />} />
         <Route path="/room/:roomCode/upload" element={<UploadPage />} />
         <Route path="/room/:roomCode/dex" element={<RoutinemonDexPage />} />
-        {/*TEST*/}
-        <Route path="/custom" element={<CharacterCustomPage />} />
-        <Route path="/dex" element={<RoutinemonDexPage />} />
-        <Route path="/upload" element={<UploadPage />} />
-        <Route path="/LogCreatePage" element={<LogCreatePage />} />
       </Routes>
     </BrowserRouter>
   )
