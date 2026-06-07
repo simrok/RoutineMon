@@ -23,6 +23,9 @@ function App() {
         <Route path="/room/:roomCode/party-quest" element={<PartyQuestPage />} />
         <Route path="/room/:roomCode/mon" element={<MonPage />} />
         <Route path="/room/:roomCode/ranking" element={<RankingPage />} />
+        <Route path="/room/:roomCode/custom/:playerId" element={<CharacterCustomPage />} />
+        <Route path="/room/:roomCode/upload" element={<UploadPage />} />
+        <Route path="/room/:roomCode/dex" element={<RoutinemonDexPage />} />
         {/*TEST*/}
         <Route path="/custom" element={<CharacterCustomPage />} />
         <Route path="/dex" element={<RoutinemonDexPage />} />
