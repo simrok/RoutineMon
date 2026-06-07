@@ -35,10 +35,10 @@ function App() {
         <Route path="/room/:roomCode/ranking" element={<RankingPage />} />
 
 
-        <Route path="/custom" element={<CharacterCustomPage />} />
-        <Route path="/dex" element={<RoutinemonDexPage />} />
-        <Route path="/upload" element={<UploadPage />} />
-        <Route path="/log-create" element={<LogCreatePage />} />
+        <Route path="/room/:roomCode/custom" element={<CharacterCustomPage />} />
+        <Route path="/room/:roomCode/dex" element={<RoutinemonDexPage />} />
+        <Route path="/room/:roomCode/upload" element={<UploadPage />} />
+        <Route path="/room/:roomCode/log-create" element={<LogCreatePage />} />
       </Routes>
     </BrowserRouter>
   )
