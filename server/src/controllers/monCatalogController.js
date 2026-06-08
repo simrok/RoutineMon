@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const pool = require('../db/db');
 
 /**
  * @ROUTE GET /api/mon-catalog
