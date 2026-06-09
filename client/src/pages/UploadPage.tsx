@@ -10,10 +10,11 @@ type Player = {
   routines: string[]
 }
 
-type UploadedImage = {
+type DailyLogEntry = {
+  memberId: number
+  routineIndex: number
   imageUrl: string
   uploadedAt: string
-  routineIndex: number
 }
 
 const players: Player[] = [
@@ -66,8 +67,25 @@ export default function UploadPage() {
   const [showUploadPopup, setShowUploadPopup] = useState(false)
   const [selectedRoutineIndex, setSelectedRoutineIndex] = useState<number | null>(null)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
-  const [uploadedImages, setUploadedImages] = useState<Record<number, UploadedImage>>({})
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
+  const [selectedDailyDot, setSelectedDailyDot] = useState(0)
+  const [dailyLogs, setDailyLogs] = useState<DailyLogEntry[]>(() =>
+    JSON.parse(localStorage.getItem('routineDailyLogs') ?? '[]')
+  )
+
+  const getDailyImage = (playerId: number, routineIndex: number) =>
+    dailyLogs.find((log) => log.memberId === playerId && log.routineIndex === routineIndex)
+
+  const allPlayersUploadedForRoutine = (routineIndex: number) =>
+    players.every((player) =>
+      dailyLogs.some((log) => log.memberId === player.id && log.routineIndex === routineIndex)
+    )
+
+  const getDotColor = (dotIndex: number) => {
+    if (allPlayersUploadedForRoutine(dotIndex)) return '#F287FB'
+    if (dotIndex === selectedDailyDot) return '#B39EFF'
+    return '#ffffff'
+  }
 
   const handleOpenUploadPopup = (playerId: number) => {
     if (playerId !== myPlayerId) {
@@ -75,7 +93,9 @@ export default function UploadPage() {
       return
     }
 
-    setSelectedRoutineIndex(null)
+    if (getDailyImage(myPlayerId, selectedDailyDot)) return
+
+    setSelectedRoutineIndex(selectedDailyDot)
     setPreviewImage(null)
     setShowUploadPopup(true)
   }
@@ -84,7 +104,7 @@ export default function UploadPage() {
     const now = new Date()
     const hour = now.getHours()
 
-    return [1, 7, 13, 19].includes(hour)
+    return [0, 6, 12, 18].some(h => hour >= h && hour < h + 3)
   }, [])
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,36 +138,22 @@ export default function UploadPage() {
       now.getMinutes(),
     ).padStart(2, '0')}`
 
-    const newImage: UploadedImage = {
+    const newLog: DailyLogEntry = {
+      memberId: myPlayerId,
+      routineIndex: selectedRoutineIndex,
       imageUrl: previewImage,
       uploadedAt,
-      routineIndex: selectedRoutineIndex,
     }
 
-    setUploadedImages((prev) => ({
-      ...prev,
-      [myPlayerId]: newImage,
-    }))
+    const updatedLogs = [
+      ...dailyLogs.filter(
+        (log) => !(log.memberId === myPlayerId && log.routineIndex === selectedRoutineIndex),
+      ),
+      newLog,
+    ]
 
-    const savedDailyLogs = JSON.parse(localStorage.getItem('routineDailyLogs') ?? '[]')
-
-    const filteredLogs = savedDailyLogs.filter(
-      (log: any) =>
-        !(log.memberId === myPlayerId && log.routineIndex === selectedRoutineIndex),
-    )
-
-    localStorage.setItem(
-      'routineDailyLogs',
-      JSON.stringify([
-        ...filteredLogs,
-        {
-          memberId: myPlayerId,
-          routineIndex: selectedRoutineIndex,
-          imageUrl: previewImage,
-          uploadedAt,
-        },
-      ]),
-    )
+    setDailyLogs(updatedLogs)
+    localStorage.setItem('routineDailyLogs', JSON.stringify(updatedLogs))
 
     setShowUploadPopup(false)
   }
@@ -165,7 +171,7 @@ export default function UploadPage() {
   event.stopPropagation()
 
   if (playerId !== myPlayerId) return
-  if (!uploadedImages[playerId]) return
+  if (!getDailyImage(playerId, selectedDailyDot)) return
 
   setDeleteTargetId(playerId)
 }
@@ -173,12 +179,11 @@ export default function UploadPage() {
 const handleDeleteImage = () => {
   if (deleteTargetId === null) return
 
-  setUploadedImages((prev) => {
-    const next = { ...prev }
-    delete next[deleteTargetId]
-    return next
-  })
-
+  const updatedLogs = dailyLogs.filter(
+    (log) => !(log.memberId === deleteTargetId && log.routineIndex === selectedDailyDot),
+  )
+  setDailyLogs(updatedLogs)
+  localStorage.setItem('routineDailyLogs', JSON.stringify(updatedLogs))
   setDeleteTargetId(null)
 }
 
@@ -244,23 +249,30 @@ const handleCancelDelete = () => {
         <div className="uploadscreen-dots-row">
           <span></span>
           <div className="uploadscreen-dots">
-            <i className="active"></i>
-            <i></i>
-            <i></i>
-            <i></i>
+            {[0, 1, 2, 3].map((i) => (
+              <button
+                key={i}
+                className="uploadscreen-dot-btn"
+                style={{ background: getDotColor(i) }}
+                onClick={() => setSelectedDailyDot(i)}
+              />
+            ))}
           </div>
           <div className="uploadscreen-dots">
-            <i className="active"></i>
-            <i></i>
-            <i></i>
-            <i></i>
+            {[0, 1, 2, 3].map((i) => (
+              <button
+                key={i}
+                className="uploadscreen-dot-btn"
+                style={{ background: '#ffffff' }}
+              />
+            ))}
           </div>
         </div>
 
         {/* 플레이어 업로드 영역 */}
         <section className="uploadscreen-player-list">
           {players.map((player) => {
-            const uploaded = uploadedImages[player.id]
+            const uploaded = getDailyImage(player.id, selectedDailyDot)
             const isMyPlayer = player.id === myPlayerId
 
             return (
@@ -306,7 +318,7 @@ const handleCancelDelete = () => {
                           className="uploadscreen-star-btn"
                           onClick={(event) => handleOpenDeletePopup(event, player.id)}
                         >
-                          ★
+                          <img src="/assets/button/star.png" alt="delete" />
                         </button>
                       )}
                     </>
