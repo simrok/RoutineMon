@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import './UploadPage.css'
 
 type Player = {
@@ -56,6 +56,7 @@ const players: Player[] = [
 
 export default function UploadPage() {
   const navigate = useNavigate()
+  const { roomCode } = useParams<{ roomCode: string }>()
 
   const myPlayerId = 1
   const myPlayer = players.find((player) => player.id === myPlayerId) ?? players[0]
@@ -218,7 +219,7 @@ const handleCancelDelete = () => {
 
         {/* 상단 버튼 */}
         <div className="uploadscreen-top-buttons">
-          <button className="uploadscreen-create-btn" onClick={() => navigate('/log-create')}>
+          <button className="uploadscreen-create-btn" onClick={() => navigate(`/room/${roomCode}/log-create`)}>
             <img src="/assets/button/createlog1.png" alt="create log" />
           </button>
 
