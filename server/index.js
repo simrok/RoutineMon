@@ -3,21 +3,25 @@ const cors = require('cors');
 require('dotenv').config();
 
 const roomRoute = require('./src/routes/roomRoute');
+const playerRoutes = require('./src/routes/playerRoutes');
 const routineRoute = require('./src/routes/routineRoute');
 const monsterRoute = require('./src/routes/monsterRoute');
 const rankingRoute = require('./src/routes/rankingRoute');
-const uploadRoute = require('./src/routes/uploadRoute'); // 👈 업로드 라우터 추가!
+const uploadRoute = require('./src/routes/uploadRoute');
+const partyQuestRoute = require('./src/routes/partyQuestRoute');
 
 const app = express();
 
-app.use(cors());                      
-app.use(express.json());              
+app.use(cors());
+app.use(express.json());
 
 app.use('/api', roomRoute);
+app.use('/api', playerRoutes);
 app.use('/api', routineRoute);
-app.use('/api', monsterRoute);        
-app.use('/api', rankingRoute);        
-app.use('/api', uploadRoute);         // 👈 업로드 라우터 등록!
+app.use('/api', monsterRoute);
+app.use('/api', rankingRoute);
+app.use('/api', uploadRoute);
+app.use('/api', partyQuestRoute);
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, status: 'OK', timestamp: new Date().toISOString() });

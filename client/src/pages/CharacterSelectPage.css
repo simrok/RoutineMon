@@ -96,6 +96,11 @@
   cursor: default;
 }
 
+/* 이미 점유된 슬롯 — 선택은 가능하지만 PIN 인증 필요 */
+.player-row.occupied .nickname-frame-img {
+  opacity: 0.75;
+}
+
 /* 별 */
 .star-area {
   width: 20px;

@@ -90,8 +90,8 @@ body {
 
 .uploadscreen-logo-sub {
   width: 130px;
-  margin-top: -4px;
-  margin-left: 53px;
+  margin-top: -2px;
+  margin-left: 34px;
   image-rendering: pixelated;
 }
 
@@ -147,7 +147,9 @@ body {
   grid-template-columns: 128px 88px 88px;
   column-gap: 24px;
   align-items: center;
-  margin-bottom: 8px;
+  justify-content: center;
+  margin-bottom: 20px;
+  margin-top: -20px;
 }
 
 .uploadscreen-create-btn,
@@ -161,13 +163,17 @@ body {
 
 .uploadscreen-create-btn {
   width: 128px;
-  height: 38px;
+  height: 45px;
 }
 
-.uploadscreen-daily-btn,
+.uploadscreen-daily-btn {
+  width: 88px;
+  height: 31px;
+}
+
 .uploadscreen-party-btn {
   width: 88px;
-  height: 38px;
+  height: 32px;
 }
 
 .uploadscreen-create-btn img,
@@ -184,7 +190,8 @@ body {
   display: grid;
   grid-template-columns: 128px 88px 88px;
   column-gap: 24px;
-  margin-bottom: 13px;
+  justify-content: center;
+  margin-bottom: 14px;
 }
 
 .uploadscreen-dots {
@@ -209,7 +216,7 @@ body {
 .uploadscreen-player-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 25px;
 }
 
 .uploadscreen-player-row {
@@ -217,6 +224,7 @@ body {
   grid-template-columns: 128px 88px 88px;
   column-gap: 24px;
   align-items: center;
+  justify-content: center;
 }
 
 .uploadscreen-player-info {
@@ -225,8 +233,8 @@ body {
 }
 
 .uploadscreen-player-img {
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   object-fit: contain;
   image-rendering: pixelated;
   position: absolute;
@@ -236,9 +244,9 @@ body {
 
 .uploadscreen-player-name {
   position: absolute;
-  left: 28px;
-  top: 80px;
-  font-size: 15px;
+  left: 25px;
+  top: 85px;
+  font-size: 14px;
   text-align: center;
 }
 

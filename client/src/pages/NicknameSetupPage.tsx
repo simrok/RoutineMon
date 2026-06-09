@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
 import ConfirmPopup from '../components/ConfirmPopup'
+import { createRoom, registerPlayer } from '../api/rooms'
 import './NicknameSetupPage.css'
 
 const MAX_NICKNAME_LENGTH = 7
@@ -23,12 +24,17 @@ function validatePin(digits: string[]): string | null {
 
 export default function NicknameSetupPage() {
   const navigate = useNavigate()
-  const { roomCode, slotNumber } = useParams<{ roomCode: string; slotNumber: string }>()
-  const { setMyPlayer, myPlayer, isHost } = useRoomStore()
+  const { roomCode, slotNumber } = useParams<{ roomCode?: string; slotNumber: string }>()
+
+  // roomCode가 없으면 방 신설 중, 있으면 방 참가 중
+  const isCreating = !roomCode
+
+  const { setRoom, setMyPlayer, pendingMaxPlayers } = useRoomStore()
 
   const [homeHover, setHomeHover] = useState(false)
   const [startHover, setStartHover] = useState(false)
   const [showExitPopup, setShowExitPopup] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   // 닉네임
   const [nickname, setNickname] = useState('')
@@ -41,10 +47,6 @@ export default function NicknameSetupPage() {
   const [pinConfirmed, setPinConfirmed] = useState(false)
   const [pinVisible, setPinVisible] = useState(false)
   const pinRefs = useRef<(HTMLInputElement | null)[]>([])
-
-  // 닉네임 실시간 체크
-  const nicknameResult = validateNickname(nickname)
-  const pinResult = validatePin(pinDigits)
 
   const canStart = nicknameStatus === 'ok' && pinStatus === 'ok'
 
@@ -96,23 +98,55 @@ export default function NicknameSetupPage() {
     }
   }
 
-  const handleStart = () => {
-    if (!canStart) return
-    if (myPlayer) {
-      setMyPlayer({ ...myPlayer, nickname, pin: pinDigits.join('') })
+  const handleStart = async () => {
+    if (!canStart || loading) return
+    const pin = pinDigits.join('')
+    const slot = Number(slotNumber)
+
+    setLoading(true)
+    try {
+      if (isCreating) {
+        // 방 신설: POST /rooms → POST /players 순서로 호출 (이 시점에 방이 DB에 생성됨)
+        const { roomCode: newCode } = await createRoom(pendingMaxPlayers)
+        const { player } = await registerPlayer(newCode, slot, nickname, pin)
+
+        setRoom({
+          roomId: player.roomId,
+          roomCode: newCode,
+          roomName: '루틴몬 방',
+          maxPlayers: pendingMaxPlayers,
+          currentPlayers: 1,
+          createdAt: new Date().toISOString(),
+        })
+        setMyPlayer(player)
+        navigate(`/room/${newCode}`)
+      } else {
+        // 방 참가: POST /players만 호출
+        const { player } = await registerPlayer(roomCode!, slot, nickname, pin)
+        setMyPlayer(player)
+        navigate(`/room/${roomCode}`)
+      }
+    } catch (e) {
+      console.error('방 신설/참가 실패:', e)
+    } finally {
+      setLoading(false)
     }
-    navigate(`/room/${roomCode}`)
   }
 
   return (
     <div className="setup-container">
+
+      {/* 이전 버튼 */}
+      <button className="back-btn" onClick={() => navigate(-1)}>
+        <img src="/assets/button/previous.png" alt="back" />
+      </button>
 
       {/* 홈 버튼 */}
       <button
         className="home-btn"
         onMouseEnter={() => setHomeHover(true)}
         onMouseLeave={() => setHomeHover(false)}
-        onClick={() => isHost ? setShowExitPopup(true) : navigate('/')}
+        onClick={() => setShowExitPopup(true)}
       >
         <img src={homeHover ? '/assets/button/home2.png' : '/assets/button/home1.png'} alt="home" />
       </button>
@@ -141,7 +175,6 @@ export default function NicknameSetupPage() {
               maxLength={MAX_NICKNAME_LENGTH}
               onChange={handleNicknameChange}
             />
-            {/* 글자수 카운터 */}
             <span
               className="char-count"
               style={{ color: nickname.length >= MAX_NICKNAME_LENGTH ? '#FF4444' : '#aaaaaa' }}
@@ -170,7 +203,6 @@ export default function NicknameSetupPage() {
           <p className="section-title">개인 입장 PIN을 설정해 주세요.</p>
           <p className="section-sub">숫자 0~9로 이뤄진 4자리 PIN</p>
 
-          {/* PIN 4칸 입력 */}
           <div className="pin-row">
             <div className="pin-boxes">
               {pinDigits.map((digit, i) => (
@@ -220,7 +252,7 @@ export default function NicknameSetupPage() {
           onMouseEnter={() => setStartHover(true)}
           onMouseLeave={() => setStartHover(false)}
           onClick={handleStart}
-          disabled={!canStart}
+          disabled={!canStart || loading}
         >
           <img
             src={startHover && canStart ? '/assets/button/start_long2.png' : '/assets/button/start_long1.png'}
@@ -229,13 +261,16 @@ export default function NicknameSetupPage() {
         </button>
 
       </div>
-      {/* 방 코드 */}
-      <p className="setup-room-code">ROOM CODE: {roomCode}</p>
 
-      {/* 홈 이동 확인 팝업 */}
+      {/* 방 코드 — 참가 시에만 표시 */}
+      {!isCreating && (
+        <p className="setup-room-code">ROOM CODE: {roomCode}</p>
+      )}
+
+      {/* 나가기 확인 팝업 */}
       {showExitPopup && (
         <ConfirmPopup
-          message={'나가면 방이 삭제됩니다.\n나가시겠습니까?'}
+          message={isCreating ? '나가면 방 신설이 취소됩니다.' : '나가시겠습니까?'}
           onYes={() => navigate('/')}
           onNo={() => setShowExitPopup(false)}
         />

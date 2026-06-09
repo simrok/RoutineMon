@@ -218,7 +218,7 @@ const handleCancelDelete = () => {
 
         {/* 상단 버튼 */}
         <div className="uploadscreen-top-buttons">
-          <button className="uploadscreen-create-btn" onClick={() => navigate('/LogCreatePage')}>
+          <button className="uploadscreen-create-btn" onClick={() => navigate('/log-create')}>
             <img src="/assets/button/createlog1.png" alt="create log" />
           </button>
 

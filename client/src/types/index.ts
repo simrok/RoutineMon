@@ -1,3 +1,10 @@
+// 방 안에 이미 등록된 플레이어 슬롯 정보 (참가 시 슬롯 목록 표시용)
+export interface RoomPlayer {
+  slotNumber: number;
+  nickname: string;
+  hasPin: boolean;
+}
+
 // 방
 export interface Room {
   roomId: number;
@@ -6,6 +13,7 @@ export interface Room {
   maxPlayers: number;
   currentPlayers: number;
   createdAt: string;
+  players?: RoomPlayer[]; // 참가 시 getRoom 응답에 포함
 }
 
 // 플레이어
