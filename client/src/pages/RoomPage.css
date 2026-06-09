@@ -1,0 +1,658 @@
+@font-face {
+  font-family: 'GalmuriMono9';
+  src: url('/assets/fonts/GalmuriMono9.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* =========================
+   LAYOUT & CONTAINER
+========================= */
+.roompage-container {
+  font-family: 'GalmuriMono9', monospace;
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-image: url('/assets/backgroundImage/background.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 40px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.roompage-header,
+.roompage-mon-area,
+.roompage-exp-area,
+.roompage-player-area,
+.roompage-start-btn,
+.roompage-daily-box,
+.roompage-party-box,
+.roompage-modal-backdrop {
+  position: absolute;
+  z-index: 2;
+}
+
+/* =========================
+   HEADER & LOGO
+========================= */
+.roompage-header {
+  top: 0;
+  left: 0;
+  width: 430px;
+  height: 116px;
+}
+
+.roompage-logo-area {
+  position: absolute;
+  top: 20px;
+  left: 104px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.roompage-logo {
+  width: 210px;
+  image-rendering: pixelated;
+}
+
+.roompage-logo-sub {
+  width: 100px;
+  margin-top: -5px;
+  image-rendering: pixelated;
+}
+
+/* =========================
+   SIDE BUTTONS
+========================= */
+.roompage-side-buttons {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  width: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.roompage-side-btn-home,
+.roompage-side-btn-dex,
+.roompage-side-btn-custom {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.roompage-side-btn-home img,
+.roompage-side-btn-dex img,
+.roompage-side-btn-custom img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roompage-side-btn-setting {
+  width: 55px;
+  height: 55px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.roompage-side-btn-setting img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  transform: scale(1.1) translateY(-6px);
+}
+
+/* =========================
+   MON STATUS
+========================= */
+.roompage-mon-area {
+  top: 84px;
+  left: 58px;
+  width: 315px;
+  display: grid;
+  grid-template-columns: 150px 130px;
+  column-gap: 0.1px;
+  align-items: start;
+}
+
+.roompage-mon-left {
+  text-align: center;
+}
+
+.roompage-mon-frame {
+  position: relative;
+  width: 156px;
+  height: 130px;
+}
+
+.roompage-mon-frame-img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roompage-main-mon {
+  position: absolute;
+  left: 36px;
+  top: 5px;
+  width: 84px;
+  height: 120px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roompage-mon-name {
+  color: #18fff4;
+  font-size: 14px;
+  margin: 0.1px 0 0;
+  line-height: 0.01;
+}
+
+.roompage-mon-right {
+  position: relative;
+  padding-top: 5px;
+}
+
+.roompage-question-btn {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  width: 38px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.roompage-question-btn img {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.roompage-face-bubble {
+  position: relative;
+  width: 140px;
+  height: 94px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.roompage-face-bubble img {
+  position: absolute;
+  inset: 0;
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roompage-face-bubble span {
+  position: relative;
+  z-index: 2;
+  color: #4d27ff;
+  font-size: 24px;
+  transform: translate(-6px,-5px);
+}
+
+.roompage-level-text {
+  color: #efff00;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 4px;
+  line-height: 1.15;
+}
+
+.roompage-level-text p {
+  margin: 2px 0;
+}
+
+/* =========================
+   EXP BAR
+========================= */
+.roompage-exp-area {
+  top: 230px;
+  left: 98px;
+  width: 250px;
+  display: grid;
+  grid-template-columns: 45px 74px 130px;
+  align-items: center;
+  column-gap: 0px;
+}
+
+.roompage-exp-label {
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.roompage-exp-value {
+  color: #efff00;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.roompage-exp-wrap {
+  position: relative;
+  width: 132px;
+  height: 27px;
+}
+
+.roompage-exp-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 120%;
+  image-rendering: pixelated;
+}
+
+.roompage-exp-fill-img {
+  position: absolute;
+  left: 3px;
+  top: -3px;
+  width: 120px;
+  height: 40px;
+  object-fit: fill;
+  image-rendering: pixelated;
+}
+
+/* =========================
+   PLAYERS AREA
+========================= */
+.roompage-player-area {
+  top: 260px;
+  left: 25px;
+  width: 380px;
+}
+
+.roompage-player-title {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0px;
+  color: #00ffba;
+  font-size: 12px;
+  letter-spacing: 8px;
+  margin-bottom: 20px;
+}
+
+.roompage-player-title button {
+  width: 42px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  transform: translateY(3px);
+}
+
+.roompage-player-title img {
+  width: 90%;
+  height: 90%;
+  image-rendering: pixelated;
+}
+
+.roompage-player-list {
+  display: grid;
+  grid-template-columns: repeat(5, 74px);
+  justify-content: center;
+  gap: 0px;
+}
+
+.roompage-player-item {
+  position: relative;
+  width: 74px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.roompage-rank-img {
+  position: absolute;
+  top: -22px;
+  left: 18px;
+  width: 35px;
+  image-rendering: pixelated;
+  z-index: 4;
+}
+
+/* PLAYER CARDS */
+.roompage-player-card1 {
+  width: 78px;
+  height: 98px;
+  position: relative;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.roompage-player-card2 {
+  width: 126px;
+  height: 98px;
+  position: relative;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.roompage-player-card1:disabled,
+.roompage-player-card2:disabled {
+  cursor: default;
+}
+
+/* PLAYER FRAMES */
+.roompage-player-frame1,
+.roompage-player-frame2 {
+  width: 100%;
+  height: 95%;
+  object-fit: fill;
+  image-rendering: pixelated;
+}
+
+/* PLAYER MONSTERS */
+.roompage-player-mon1 {
+  position: absolute;
+  left: 8px;
+  top: 24px;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roompage-player-mon2 {
+  position: absolute;
+  left: 32px;
+  top: 24px;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roompage-add-icon {
+  position: absolute;
+  left: 40px;
+  top: 30px;
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roompage-nickname-wrap {
+  position: relative;
+  width: 68px;
+  height: 24px;
+  margin-top: -1px;
+}
+
+.roompage-nickname-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: pixelated;
+}
+
+.roompage-nickname-wrap span {
+  position: absolute;
+  inset: 0;
+  color: #4d27ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+}
+
+/* =========================
+   START BUTTON
+========================= */
+.roompage-start-btn {
+  top: 435px;
+  left: 130px;
+  width: 170px;
+  height: 64px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.roompage-start-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* =========================
+   QUEST BOXES
+========================= */
+.roompage-daily-box,
+.roompage-party-box {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 370px;
+  box-sizing: border-box;
+  background: rgba(163, 131, 236, 0.58);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.roompage-daily-box {
+  top: 500px;
+  height: 64px;
+  padding-top: 12px;
+}
+
+.roompage-party-box {
+  top: 575px;
+  min-height: 142px;
+  padding-top: 12px;
+  padding-bottom: 0px;
+}
+
+.roompage-daily-box h2,
+.roompage-party-box h2 {
+  margin: 0;
+  font-size: 12px;
+  font-family: 'GalmuriMono9', monospace;
+  font-weight: normal;
+  line-height: 1.2;
+}
+
+.roompage-quest-stars {
+  width: 160px;
+  margin-top: 6px;
+  image-rendering: pixelated;
+}
+
+.roompage-box-question {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 30px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  z-index: 3;
+}
+
+.roompage-box-question img {
+  width: 100%;
+  height: 80%;
+  image-rendering: pixelated;
+}
+
+.roompage-party-empty {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 15px;
+  margin-top: 30px;
+}
+
+.roompage-party-alert {
+  color: #efff00;
+  font-size: 14px;
+  font-family: 'GalmuriMono9', monospace;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.roompage-party-actions {
+  display: flex;
+  justify-content: center;
+  gap: 34px;
+}
+
+.roompage-party-actions button {
+  width: 70px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.roompage-party-actions img {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.roompage-party-active {
+  color: #18fff4;
+  font-size: 17px;
+  margin-top: 22px;
+  margin-bottom: 14px;
+}
+
+.roompage-party-stars {
+  width: 175px;
+  image-rendering: pixelated;
+}
+
+.roompage-time-limit {
+  width: 225px;
+  margin-top: 16px;
+  background: #ffffff;
+  color: #000000;
+  padding: 9px 0;
+  font-size: 13px;
+}
+
+/* =========================
+   MODAL & TIMER
+========================= */
+.roompage-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(142, 126, 218, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.roompage-party-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 340px;
+}
+
+.roompage-modal-frame-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.roompage-modal-frame-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.roompage-invisible-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.roompage-modal-content-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 40px;
+  box-sizing: border-box;
+  color: #4d27ff;
+  font-size: 16px;
+}
+
+.roompage-modal-content-overlay p {
+  margin: 0;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.roompage-modal-timer-box {
+  background: #ffffff;
+  color: #000000;
+  display: inline-block;
+  padding: 10px 20px;
+  margin-top: 25px;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.roompage-modal-yes {
+  margin-top: 18px;
+  width: 80px;
+  height: 36px;
+  background: #ffb8ff;
+  border: 2px solid #ffffff;
+  outline: 2px solid #5731cc;
+  color: #5731cc;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: inherit;
+}
