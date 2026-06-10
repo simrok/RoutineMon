@@ -128,9 +128,9 @@
   color: #ffffff;
   text-align: center;
   font-family: 'GalmuriMono9', monospace;
-  font-size: 25px;
-  text-shadow: 2px 2px 0 #452ca5;
-  margin-bottom: 30px;
+  font-size: 22px;
+  margin-bottom: 40px;
+  margin-top: 15px;
 }
 
 .dexscreen-category-list {

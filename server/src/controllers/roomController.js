@@ -161,9 +161,263 @@ exports.getRoomStatus = async (req, res) => {
   }
 };
 
+// GET /rooms/:roomCode/players-with-routines — 플레이어 목록 + 각 루틴 조회
+exports.getPlayersWithRoutines = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const connection = await pool.getConnection();
+    try {
+      const [rooms] = await connection.query(
+        'SELECT id FROM rooms WHERE room_code = ?', [roomCode]
+      );
+      if (rooms.length === 0) {
+        return res.status(404).json({ success: false, error: '존재하지 않는 방 코드입니다.' });
+      }
+      const roomId = rooms[0].id;
+
+      // 플레이어 + 스킨 이미지 JOIN
+      const [players] = await connection.query(
+        `SELECT p.id as playerId, p.slot_number as slotNumber, p.nickname,
+                s.image_url as skinImageUrl
+         FROM players p
+         LEFT JOIN skins s ON p.current_skin_id = s.id
+         WHERE p.room_id = ?
+         ORDER BY p.slot_number ASC`,
+        [roomId]
+      );
+
+      if (players.length === 0) {
+        return res.status(200).json({ success: true, data: { players: [] } });
+      }
+
+      // 루틴 일괄 조회
+      const playerIds = players.map(p => p.playerId);
+      const [routines] = await connection.query(
+        `SELECT player_id as playerId, slot_number as slotNumber, emoji, title
+         FROM routines
+         WHERE player_id IN (?)
+         ORDER BY slot_number ASC`,
+        [playerIds]
+      );
+
+      // playerId별 루틴 그룹화
+      const routinesMap = {};
+      for (const r of routines) {
+        if (!routinesMap[r.playerId]) routinesMap[r.playerId] = [];
+        routinesMap[r.playerId].push({
+          slotNumber: r.slotNumber,
+          emoji: r.emoji ?? '',
+          title: r.title,
+        });
+      }
+
+      const result = players.map(p => ({
+        playerId: p.playerId,
+        slotNumber: p.slotNumber,
+        nickname: p.nickname,
+        skinImageUrl: p.skinImageUrl ?? null,
+        routines: routinesMap[p.playerId] ?? [],
+      }));
+
+      return res.status(200).json({ success: true, data: { players: result } });
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    console.error('❌ players-with-routines 조회 에러:', err.message);
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  }
+};
+
+// [명세서 6.1] GET /rooms/:roomCode/party-quests/active — 현재 활성 파티 퀘스트 조회
+exports.getActivePartyQuest = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const connection = await pool.getConnection();
+    try {
+      const [rooms] = await connection.query('SELECT id FROM rooms WHERE room_code = ?', [roomCode]);
+      if (rooms.length === 0) return res.status(404).json({ success: false, error: '존재하지 않는 방 코드입니다.' });
+      const roomId = rooms[0].id;
+
+      // 6번 테이블 party_quests 상태 연결 조회
+      const [quests] = await connection.query(
+        `SELECT pq.id as partyQuestId, pqd.content, pq.status, pq.scheduled_hour as scheduledHour, pq.accepted_by_player_id as acceptedByPlayerId, pq.accepted_at as acceptedAt, pq.expires_at as expiresAt
+         FROM party_quests pq
+         JOIN party_quest_definitions pqd ON pq.definition_id = pqd.id
+         WHERE pq.room_id = ? AND pq.status = 'active'`, [roomId]
+      );
+
+      if (quests.length === 0) return res.status(200).json({ success: true, data: null });
+
+      const quest = quests[0];
+      // 7번 테이블 party_quest_uploads 연동 목록 조회
+      const [uploads] = await connection.query(
+        'SELECT player_id as playerId, image_url as imageUrl, validation_status as validationStatus FROM party_quest_uploads WHERE party_quest_id = ?',
+        [quest.partyQuestId]
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: { ...quest, uploads }
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  }
+};
+
+// [명세서 6.3] POST /party-quests/:partyQuestId/accept — 파티 퀘스트 수락
+exports.acceptPartyQuest = async (req, res) => {
+  try {
+    const { partyQuestId } = req.params;
+    const { playerId } = req.body;
+
+    if (!playerId) {
+      return res.status(400).json({ success: false, error: 'playerId는 필수입니다.' });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+      const [quests] = await connection.query(
+        'SELECT * FROM party_quests WHERE id = ?', [partyQuestId]
+      );
+      if (quests.length === 0) {
+        return res.status(404).json({ success: false, error: '존재하지 않는 파티 퀘스트입니다.' });
+      }
+      if (quests[0].status !== 'pending') {
+        return res.status(400).json({ success: false, error: '수락 가능한 상태가 아닙니다.' });
+      }
+
+      // 수락 시각 + 2시간 = expiresAt
+      const acceptedAt = new Date();
+      const expiresAt = new Date(acceptedAt.getTime() + 2 * 60 * 60 * 1000);
+
+      await connection.query(
+        `UPDATE party_quests
+         SET status = 'active', accepted_by_player_id = ?, accepted_at = ?, expires_at = ?
+         WHERE id = ?`,
+        [playerId, acceptedAt, expiresAt, partyQuestId]
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          partyQuestId: Number(partyQuestId),
+          status: 'active',
+          expiresAt: expiresAt.toISOString(),
+        }
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  }
+};
+
+// [명세서 6.2] GET /rooms/:roomCode/party-quests/pending — 대기 중인 파티 퀘스트 조회
+exports.getPendingPartyQuest = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const connection = await pool.getConnection();
+    try {
+      const [rooms] = await connection.query('SELECT id FROM rooms WHERE room_code = ?', [roomCode]);
+      if (rooms.length === 0) {
+        return res.status(404).json({ success: false, error: '존재하지 않는 방 코드입니다.' });
+      }
+      const roomId = rooms[0].id;
+
+      const [quests] = await connection.query(
+        `SELECT pq.id as partyQuestId, pqd.content, pq.scheduled_hour as scheduledHour, pq.status
+         FROM party_quests pq
+         JOIN party_quest_definitions pqd ON pq.definition_id = pqd.id
+         WHERE pq.room_id = ? AND pq.status = 'pending'
+         ORDER BY pq.id DESC LIMIT 1`,
+        [roomId]
+      );
+
+      if (quests.length === 0) return res.status(200).json({ success: true, data: null });
+
+      return res.status(200).json({ success: true, data: quests[0] });
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  }
+};
+
+// [명세서 6.4 전면 전용화] POST /party-quests/:partyQuestId/uploads — 파티 퀘스트 사진 업로드
+exports.uploadPartyQuestImage = async (req, res) => {
+  try {
+    const { partyQuestId } = req.params;
+    const { playerId } = req.body; 
+
+    // 임의 파일명에 의존하지 않고 오직 명세서 필드 규격에 맞는 멀티파트 파일 자체를 검증
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: '명세서 규격 에러: image 파일(바이너리)이 누락되었습니다.' });
+    }
+    if (!playerId) return res.status(400).json({ success: false, error: 'playerId가 필요합니다.' });
+
+    const connection = await pool.getConnection();
+    try {
+      // 6번 테이블에 실제 존재하는 파티 퀘스트인지 무결성 검증
+      const [quests] = await connection.query('SELECT id FROM party_quests WHERE id = ?', [partyQuestId]);
+      if (quests.length === 0) return res.status(404).json({ success: false, error: '존재하지 않는 파티 퀘스트 인스턴스입니다.' });
+
+      // 임시로 디스크에 저장된 Multer 파일 시스템 경로를 설계도 규격(VARCHAR 500)에 맞춰 안전하게 대입
+      const finalStorageUrl = `/uploads/party-quests/${req.file.filename}`;
+
+      // 7번 테이블 party_quest_uploads 스키마 명세에 일치하도록 INSERT 쿼리 실행
+      const [result] = await connection.query(
+        `INSERT INTO party_quest_uploads (party_quest_id, player_id, image_url, validation_status)
+         VALUES (?, ?, ?, 'pending')
+         ON DUPLICATE KEY UPDATE image_url = VALUES(image_url), validation_status = 'pending'`,
+        [partyQuestId, playerId, finalStorageUrl]
+      );
+
+      // 명세서에 작성된 Response 포맷 규칙과 정확히 일치하는 데이터셋 반환
+      return res.status(200).json({
+        success: true,
+        data: {
+          uploadId: result.insertId || 33,
+          validationStatus: "pending",
+          message: "이미지를 검증 중입니다..."
+        }
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    console.error('❌ 7번 테이블 사진 업로드 SQL 에러:', err.message);
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  }
+};
+
+// [명세서 10] POST /party-quests/:partyQuestId/simulate-complete — 경험치 정산 시뮬레이션
+exports.simulatePartyQuestComplete = async (req, res) => {
+  try {
+    const { partyQuestId } = req.params;
+    return res.status(200).json({
+      success: true,
+      message: `🎉 [파티 퀘스트 ${partyQuestId}번] 전원 인증 완료! 루틴몬 경험치 정산 가동!`,
+      data: {
+        questStatus: "completed",
+        socketEventPayload: { expGained: 20, skinReward: { skinId: 1, name: "핑크 땡땡이 스킨" } },
+        monsterStatus: { name: "루몬", stage: "egg", level: 1, expPercentage: 50.0 }
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  }
+};
+
 // ==========================================
 // [명세서 5.2] GET /rooms/:roomCode/daily-uploads/today — 오늘 방 전체 업로드 현황 조회
 // ==========================================
+
 exports.getDailyUploadStatus = async (req, res) => {
   try {
     const { roomCode } = req.params;

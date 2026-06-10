@@ -92,6 +92,19 @@ const createTables = async () => {
       );
     `);
 
+    // 6-1. party_quest_definitions 시드 데이터 (없을 때만 INSERT)
+    await connection.query(`
+      INSERT IGNORE INTO party_quest_definitions (id, content, is_active) VALUES
+        (1, '주변에 있는 빨간 지붕을 찍어라!', TRUE),
+        (2, '브이를 하고 셀카를 찍으세요!', TRUE),
+        (3, '하늘이 보이는 곳에서 사진을 찍어라!', TRUE),
+        (4, '지금 먹고 있는 음식을 찍어라!', TRUE),
+        (5, '나무 또는 식물과 함께 사진을 찍어라!', TRUE),
+        (6, '오늘 신은 신발을 찍어라!', TRUE),
+        (7, '창문 밖 풍경을 찍어라!', TRUE),
+        (8, '지금 손에 들고 있는 것을 찍어라!', TRUE);
+    `);
+
     // 7. party_quests 테이블
     await connection.query(`
       CREATE TABLE IF NOT EXISTS party_quests (

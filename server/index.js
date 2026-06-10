@@ -13,6 +13,7 @@ const monsterRoute = require('./src/routes/monsterRoute');
 const rankingRoute = require('./src/routes/rankingRoute');
 const uploadRoute = require('./src/routes/uploadRoute');
 const partyQuestRoute = require('./src/routes/partyQuestRoute');
+const { startPartyQuestCron } = require('./src/cron/partyQuestCron');
 const monCatalogRoutes = require('./src/routes/monCatalogRoutes');
 const skinsRoutes = require('./src/routes/skinsRoutes');
 
@@ -204,6 +205,8 @@ setInterval(async () => {
 }, 60000);
 
 const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
-  console.log(`✅ 명세서 100% 매칭 완료 서버가 포트 ${PORT}에서 가동 중입니다.`);
+
+app.listen(PORT, () => {
+  console.log(`✅ 서버가 http://localhost:${PORT} 에서 실행 중입니다!`);
+  startPartyQuestCron();
 });
