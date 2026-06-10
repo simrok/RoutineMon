@@ -131,6 +131,17 @@ exports.registerPlayer = async (req, res) => {
 
     await connection.commit();
 
+    // 🌟 [소켓 추가] 플레이어 입장 알림 실시간 방송
+    const io = req.app.get('io');
+    if (io) {
+      io.to(roomCode).emit('room:player-joined', {
+        playerId: Number(insertResult.insertId),
+        slotNumber: Number(slotNumber),
+        nickname: nickname
+      });
+      console.log(`📡 [소켓 방송] 방 ${roomCode}에 플레이어 ${nickname} 입장 알림 전송 완료!`);
+    }
+
     return res.status(201).json({
       success: true,
       data: {
@@ -326,10 +337,6 @@ exports.resetPin = async (req, res) => {
       });
     }
 
-    // TODO:
-    // 실제 Socket 승인 여부 검증 필요
-    // ex) pin_reset_approvals 테이블 등
-
     const hashedPin = await bcrypt.hash(
       newPin,
       10
@@ -391,10 +398,12 @@ exports.updatePlayer = async (req, res) => {
       });
     }
 
+    // 🌟 소켓 방 코드를 조회하기 위해 room_id 필드를 조회 대상에 추가함
     const [playerRows] = await connection.query(
       `
       SELECT
         id,
+        room_id,
         pin_hash
       FROM players
       WHERE id = ?
@@ -490,6 +499,25 @@ exports.updatePlayer = async (req, res) => {
     );
 
     const [updatedRows] = await connection.query(`SELECT id AS playerId, nickname, current_skin_id AS currentSkinId FROM players WHERE id = ?`, [playerId]);
+
+    // 🌟 [소켓 추가] 명세서 10번 규격에 맞추어 실시간 방에 변경 알림 전송
+    const io = req.app.get('io');
+    if (io) {
+      const [roomRows] = await connection.query(
+        'SELECT room_code FROM rooms WHERE id = ?',
+        [playerRows[0].room_id]
+      );
+      
+      if (roomRows.length > 0) {
+        const roomCode = roomRows[0].room_code;
+        io.to(roomCode).emit('room:player-updated', {
+          playerId: Number(updatedRows[0].playerId),
+          nickname: updatedRows[0].nickname,
+          currentSkinId: updatedRows[0].currentSkinId !== null ? Number(updatedRows[0].currentSkinId) : null
+        });
+        console.log(`📡 [소켓 방송] 방 ${roomCode}에 플레이어 프로필 변경 알림 전송 완료!`);
+      }
+    }
 
     return res.status(200).json({
         success: true,

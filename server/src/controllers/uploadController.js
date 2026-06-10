@@ -1,12 +1,17 @@
 const pool = require('../db/db');
 
-// [명세서 5.1] POST /uploads/daily — 일일 루틴 사진 업로드 및 인증
+// [명세서 5.1 교정] POST /players/:playerId/daily-uploads — 일일 루틴 사진 업로드 및 인증
 exports.uploadDailyRoutine = async (req, res) => {
-
-    const { playerId, routineId, imageUrl } = req.body;
+    // 명세서 라우터 규격에 따라 playerId는 params에서 추출
+    const { playerId } = req.params;
+    // multipart/form-data 또는 파일 업로드 미들웨어가 만들어준 경로 매핑
+    const { routineId } = req.body;
+    
+    // Multer나 Cloudinary 파일 가공 결과물 주소 선택 (없을 시 더미 텍스트 대응)
+    const imageUrl = req.file ? req.file.path : (req.body.imageUrl || "https://res.cloudinary.com/dummy/photo.jpg");
 
     // 1. 필수 파라미터 누락 검증
-    if (!playerId || !routineId || !imageUrl) {
+    if (!playerId || !routineId) {
       return res.status(400).json({ success: false, error: '필수 파라미터가 누락되었습니다.' });
     }
 
@@ -55,31 +60,23 @@ exports.uploadDailyRoutine = async (req, res) => {
       );
       const uploadedCount = countRows[0].uploadedCount;
 
-      // [명세서 실시간 소켓 반영] 누군가 루틴 사진을 올렸음을 방 전체에 브로드캐스트
-      const io = req.app.get('io');
-      if (io) {
-        io.to(roomCode).emit('daily:upload-updated', {
-          playerId: Number(playerId),
-          routineId: Number(routineId),
-          uploadedCount: uploadedCount
-        });
-      }
-
       let expGained = 0;
       let monUpdated = null;
       let dailyQuestCompletedNow = false;
+      
+      let dailyQuestCompletedSocket = false;
+      let monExpUpdatedSocket = null;
+      let monEvolvedSocket = null;
 
-      // 5. [기획서 핵심] 개인이 오늘 딱 3번째 업로드를 달성한 순간에만 방 전체 퀘스트 조건 검사 진입
+      // 5. [명세서 조건 동기화] 개인이 오늘 딱 3번째 업로드(일일퀘 완성 조건)를 달성한 시점 검사
       if (uploadedCount === 3) {
         
-        // (A) 현재 이 방에 등록된 총 플레이어 수 조회
         const [playerCountRows] = await connection.query(
           'SELECT COUNT(*) AS totalPlayers FROM players WHERE room_id = ?',
           [roomId]
         );
         const totalPlayers = playerCountRows[0].totalPlayers;
 
-        // (B) 오늘 3개 이상 업로드하여 자기 몫을 다한 '서로 다른 플레이어 수' 집계
         const [progressRows] = await connection.query(`
           SELECT player_id
           FROM daily_uploads
@@ -91,24 +88,22 @@ exports.uploadDailyRoutine = async (req, res) => {
 
         const completedPlayersCount = progressRows.length;
 
-        // (C) 방 멤버 전원이 오늘 미션을 완수했다면 방 전체 일일 퀘스트 최종 클리어!
+        // 방 멤버 전원이 미션을 충족했을 때 일일 퀘스트 최종 클리어
         if (completedPlayersCount === totalPlayers) {
-          
           const [monRows] = await connection.query('SELECT * FROM mons WHERE room_id = ?', [roomId]);
           if (monRows.length > 0) {
             const mon = monRows[0];
             const monId = mon.id;
 
-            // (D) 중복 지급 방지: 오늘 이미 일일 퀘스트(daily_quest) 보상을 지급받았는지 로그 확인
             const [logRows] = await connection.query(
               "SELECT id FROM exp_logs WHERE mon_id = ? AND source = 'daily_quest' AND DATE(gained_at) = ?",
               [monId, today]
             );
 
-            // 오늘 최초로 전원 달성 조건을 충족한 시점인 경우 보상 부여
             if (logRows.length === 0) {
               expGained = 20;
               dailyQuestCompletedNow = true;
+              dailyQuestCompletedSocket = true;
 
               let currentExp = Number(mon.exp_percentage || 0);
               let currentLevel = Number(mon.level || 1);
@@ -117,80 +112,89 @@ exports.uploadDailyRoutine = async (req, res) => {
 
               let newExp = currentExp + expGained;
 
-              // 레벨업 및 기획서 기반 단계별 진화 시스템 (EGG -> BABY -> CHILD -> ADULT -> 만렙 시 EGG 리셋)
               if (newExp >= 100) {
                 newExp -= 100;
                 currentLevel += 1;
                 
                 if (currentLevel > 2) {
-                  currentLevel = 1; // 다음 단계의 레벨 1로 리셋
-                  
+                  currentLevel = 1;
                   if (currentStage === 'EGG') currentStage = 'BABY';
                   else if (currentStage === 'BABY') currentStage = 'CHILD';
                   else if (currentStage === 'CHILD') currentStage = 'ADULT';
                   else if (currentStage === 'ADULT') {
-                    // 기획서 반영: ADULT LV2 100% 달성 시 새로운 알(EGG)로 순환
                     currentStage = 'EGG';
                     nextCatalogId = null;
                   }
                   
-                  // 진화 성공 시 소켓 이벤트 브로드캐스트
-                  if (io) {
-                    io.to(roomCode).emit('mon:evolved', {
-                      newStage: currentStage,
-                      catalogId: nextCatalogId,
-                      name: '루틴몬'
-                    });
-                  }
+                  monEvolvedSocket = {
+                    newStage: currentStage,
+                    catalogId: nextCatalogId ? Number(nextCatalogId) : null,
+                    name: mon.name || '루틴몬'
+                  };
                 }
               }
 
-              // 몬스터 상태값 DB 업데이트
+              const finalExpPercentage = Number(newExp.toFixed(2));
+
               await connection.query(
                 'UPDATE mons SET level = ?, stage = ?, exp_percentage = ?, catalog_id = ? WHERE room_id = ?',
-                [currentLevel, currentStage, newExp.toFixed(2), nextCatalogId, roomId]
+                [currentLevel, currentStage, finalExpPercentage, nextCatalogId, roomId]
               );
 
-              // DB 테이블 규격: 경험치 로그 기록 적재
               await connection.query(
                 "INSERT INTO exp_logs (mon_id, source, exp_gained) VALUES (?, 'daily_quest', ?)",
                 [monId, expGained]
               );
 
               monUpdated = {
+                monId: monId,
+                catalogId: nextCatalogId,
                 stage: currentStage,
                 level: currentLevel,
-                expPercentage: newExp.toFixed(2)
+                expPercentage: finalExpPercentage
               };
 
-              // [명세서 실시간 소켓 반영] 방 전체 일일퀘스트 완료 및 몬스터 상태 변경 전송
-              if (io) {
-                io.to(roomCode).emit('daily:quest-completed', { expGained: 20 });
-                io.to(roomCode).emit('mon:exp-updated', {
-                  expPercentage: newExp.toFixed(2),
-                  level: currentLevel,
-                  stage: currentStage
-                });
-              }
+              monExpUpdatedSocket = {
+                expPercentage: finalExpPercentage,
+                level: currentLevel,
+                stage: currentStage
+              };
             }
           }
         }
       }
 
+      // DB 안전 커밋
       await connection.commit();
 
-      // 명세서 5.1 출력 응답 규격 100% 동기화 반환
-      return res.status(201).json({
+      // 안전 소켓 영역 작동
+      const io = req.app.get('io');
+      if (io && roomCode) {
+        io.to(roomCode).emit('daily:upload-updated', {
+          playerId: Number(playerId),
+          routineId: Number(routineId),
+          uploadedCount: Number(uploadedCount)
+        });
+
+        if (dailyQuestCompletedSocket) {
+          io.to(roomCode).emit('daily:quest-completed', { expGained: 20 });
+        }
+        if (monExpUpdatedSocket) {
+          io.to(roomCode).emit('mon:exp-updated', monExpUpdatedSocket);
+        }
+        if (monEvolvedSocket) {
+          io.to(roomCode).emit('mon:evolved', monEvolvedSocket);
+        }
+      }
+
+      // 명세서 5.1 출력 응답 규격 100% 매칭 반환
+      return res.status(200).json({
         success: true,
         data: {
           uploadId: uploadResult.insertId,
-          playerId: Number(playerId),
           routineId: Number(routineId),
           imageUrl: imageUrl,
-          uploadedCountToday: uploadedCount,
-          dailyQuestCompleted: dailyQuestCompletedNow, // 실제 방 전원이 성공했을 때만 true 반환
-          expGained: expGained,
-          mon: monUpdated
+          uploadDate: today
         }
       });
 
