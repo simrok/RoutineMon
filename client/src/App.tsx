@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
+import JoinPage from './pages/JoinPage'
 import CharacterSelectPage from './pages/CharacterSelectPage'
 import NicknameSetupPage from './pages/NicknameSetupPage'
 import PinVerifyPage from './pages/PinVerifyPage'
@@ -23,6 +24,7 @@ function App() {
         <Route path="/create/setup/:slotNumber" element={<NicknameSetupPage />} />
 
         {/* 방 참가 흐름 (roomCode 있음) */}
+        <Route path="/join/:roomCode" element={<JoinPage />} />
         <Route path="/join/:roomCode/select" element={<CharacterSelectPage />} />
         <Route path="/join/:roomCode/setup/:slotNumber" element={<NicknameSetupPage />} />
         <Route path="/join/:roomCode/verify/:slotNumber" element={<PinVerifyPage />} />

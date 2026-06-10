@@ -28,10 +28,19 @@ router.post('/rooms', roomController.createRoom);
 // 명세서 2: GET /rooms/:roomCode — 방 정보 조회
 router.get('/rooms/:roomCode', roomController.getRoomStatus);
 
-// 명세서 5.1: GET /rooms/:roomCode/party-quests/active — 활성 파티 퀘스트 조회
+// 플레이어 목록 + 루틴 조회
+router.get('/rooms/:roomCode/players-with-routines', roomController.getPlayersWithRoutines);
+
+// 명세서 6.1: GET /rooms/:roomCode/party-quests/active — 활성 파티 퀘스트 조회
 router.get('/rooms/:roomCode/party-quests/active', roomController.getActivePartyQuest);
 
-// 명세서 6.4: POST /party-quests/:partyQuestId/uploads 
+// 명세서 6.2: GET /rooms/:roomCode/party-quests/pending — 대기 중인 파티 퀘스트 조회
+router.get('/rooms/:roomCode/party-quests/pending', roomController.getPendingPartyQuest);
+
+// 명세서 6.3: POST /party-quests/:partyQuestId/accept — 파티 퀘스트 수락
+router.post('/party-quests/:partyQuestId/accept', roomController.acceptPartyQuest);
+
+// 명세서 6.4: POST /party-quests/:partyQuestId/uploads
 router.post('/party-quests/:partyQuestId/uploads', upload.single('image'), roomController.uploadPartyQuestImage);
 
 // 명세서 10: 시뮬레이션

@@ -512,6 +512,32 @@ exports.updatePlayer = async (req, res) => {
 };
 
 // ==========================================
+// DELETE /players/:playerId/leave
+// 방 나가기 (플레이어 삭제)
+// ==========================================
+exports.leaveRoom = async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const { playerId } = req.params;
+
+    const [rows] = await connection.query(
+      'SELECT id FROM players WHERE id = ?', [playerId]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: '존재하지 않는 플레이어입니다.' });
+    }
+
+    await connection.query('DELETE FROM players WHERE id = ?', [playerId]);
+
+    return res.status(200).json({ success: true, message: '방을 나갔습니다.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류 발생' });
+  } finally {
+    connection.release();
+  }
+};
+
+// ==========================================
 // [명세서 3.5]
 // GET /players/:playerId/contribution
 // 기여도 조회

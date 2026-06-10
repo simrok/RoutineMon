@@ -14,6 +14,9 @@ router.post('/rooms/:roomCode/players/:slotNumber/reset-pin', playerController.r
 // 플레이어 정보 수정 (닉네임/스킨, 헤더에 X-Player-Pin 필요)
 router.patch('/players/:playerId', playerController.updatePlayer);
 
+// 방 나가기
+router.delete('/players/:playerId/leave', playerController.leaveRoom);
+
 // 플레이어 누적 기여도 조회
 router.get('/players/:playerId/contribution', playerController.getContribution);
 

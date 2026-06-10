@@ -9,6 +9,7 @@ const monsterRoute = require('./src/routes/monsterRoute');
 const rankingRoute = require('./src/routes/rankingRoute');
 const uploadRoute = require('./src/routes/uploadRoute');
 const partyQuestRoute = require('./src/routes/partyQuestRoute');
+const { startPartyQuestCron } = require('./src/cron/partyQuestCron');
 
 const app = express();
 
@@ -30,4 +31,5 @@ app.get('/api/health', (req, res) => {
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`✅ 서버가 http://localhost:${PORT} 에서 실행 중입니다!`);
+  startPartyQuestCron();
 });

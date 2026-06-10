@@ -121,6 +121,74 @@ exports.createRoom = async (req, res) => {
   }
 };
 
+// GET /rooms/:roomCode/players-with-routines — 플레이어 목록 + 각 루틴 조회
+exports.getPlayersWithRoutines = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const connection = await pool.getConnection();
+    try {
+      const [rooms] = await connection.query(
+        'SELECT id FROM rooms WHERE room_code = ?', [roomCode]
+      );
+      if (rooms.length === 0) {
+        return res.status(404).json({ success: false, error: '존재하지 않는 방 코드입니다.' });
+      }
+      const roomId = rooms[0].id;
+
+      // 플레이어 + 스킨 이미지 JOIN
+      const [players] = await connection.query(
+        `SELECT p.id as playerId, p.slot_number as slotNumber, p.nickname,
+                s.image_url as skinImageUrl
+         FROM players p
+         LEFT JOIN skins s ON p.current_skin_id = s.id
+         WHERE p.room_id = ?
+         ORDER BY p.slot_number ASC`,
+        [roomId]
+      );
+
+      if (players.length === 0) {
+        return res.status(200).json({ success: true, data: { players: [] } });
+      }
+
+      // 루틴 일괄 조회
+      const playerIds = players.map(p => p.playerId);
+      const [routines] = await connection.query(
+        `SELECT player_id as playerId, slot_number as slotNumber, emoji, title
+         FROM routines
+         WHERE player_id IN (?)
+         ORDER BY slot_number ASC`,
+        [playerIds]
+      );
+
+      // playerId별 루틴 그룹화
+      const routinesMap = {};
+      for (const r of routines) {
+        if (!routinesMap[r.playerId]) routinesMap[r.playerId] = [];
+        routinesMap[r.playerId].push({
+          slotNumber: r.slotNumber,
+          emoji: r.emoji ?? '',
+          title: r.title,
+        });
+      }
+
+      const result = players.map(p => ({
+        playerId: p.playerId,
+        slotNumber: p.slotNumber,
+        nickname: p.nickname,
+        skinImageUrl: p.skinImageUrl ?? null,
+        routines: routinesMap[p.playerId] ?? [],
+      }));
+
+      return res.status(200).json({ success: true, data: { players: result } });
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    console.error('❌ players-with-routines 조회 에러:', err.message);
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  }
+};
+
 // [명세서 6.1] GET /rooms/:roomCode/party-quests/active — 현재 활성 파티 퀘스트 조회
 exports.getActivePartyQuest = async (req, res) => {
   try {
@@ -133,7 +201,7 @@ exports.getActivePartyQuest = async (req, res) => {
 
       // 6번 테이블 party_quests 상태 연결 조회
       const [quests] = await connection.query(
-        `SELECT pq.id as partyQuestId, pqd.content, pq.status, pq.accepted_by_player_id as acceptedByPlayerId, pq.accepted_at as acceptedAt, pq.expires_at as expiresAt
+        `SELECT pq.id as partyQuestId, pqd.content, pq.status, pq.scheduled_hour as scheduledHour, pq.accepted_by_player_id as acceptedByPlayerId, pq.accepted_at as acceptedAt, pq.expires_at as expiresAt
          FROM party_quests pq
          JOIN party_quest_definitions pqd ON pq.definition_id = pqd.id
          WHERE pq.room_id = ? AND pq.status = 'active'`, [roomId]
@@ -152,6 +220,87 @@ exports.getActivePartyQuest = async (req, res) => {
         success: true,
         data: { ...quest, uploads }
       });
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  }
+};
+
+// [명세서 6.3] POST /party-quests/:partyQuestId/accept — 파티 퀘스트 수락
+exports.acceptPartyQuest = async (req, res) => {
+  try {
+    const { partyQuestId } = req.params;
+    const { playerId } = req.body;
+
+    if (!playerId) {
+      return res.status(400).json({ success: false, error: 'playerId는 필수입니다.' });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+      const [quests] = await connection.query(
+        'SELECT * FROM party_quests WHERE id = ?', [partyQuestId]
+      );
+      if (quests.length === 0) {
+        return res.status(404).json({ success: false, error: '존재하지 않는 파티 퀘스트입니다.' });
+      }
+      if (quests[0].status !== 'pending') {
+        return res.status(400).json({ success: false, error: '수락 가능한 상태가 아닙니다.' });
+      }
+
+      // 수락 시각 + 2시간 = expiresAt
+      const acceptedAt = new Date();
+      const expiresAt = new Date(acceptedAt.getTime() + 2 * 60 * 60 * 1000);
+
+      await connection.query(
+        `UPDATE party_quests
+         SET status = 'active', accepted_by_player_id = ?, accepted_at = ?, expires_at = ?
+         WHERE id = ?`,
+        [playerId, acceptedAt, expiresAt, partyQuestId]
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          partyQuestId: Number(partyQuestId),
+          status: 'active',
+          expiresAt: expiresAt.toISOString(),
+        }
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  }
+};
+
+// [명세서 6.2] GET /rooms/:roomCode/party-quests/pending — 대기 중인 파티 퀘스트 조회
+exports.getPendingPartyQuest = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const connection = await pool.getConnection();
+    try {
+      const [rooms] = await connection.query('SELECT id FROM rooms WHERE room_code = ?', [roomCode]);
+      if (rooms.length === 0) {
+        return res.status(404).json({ success: false, error: '존재하지 않는 방 코드입니다.' });
+      }
+      const roomId = rooms[0].id;
+
+      const [quests] = await connection.query(
+        `SELECT pq.id as partyQuestId, pqd.content, pq.scheduled_hour as scheduledHour, pq.status
+         FROM party_quests pq
+         JOIN party_quest_definitions pqd ON pq.definition_id = pqd.id
+         WHERE pq.room_id = ? AND pq.status = 'pending'
+         ORDER BY pq.id DESC LIMIT 1`,
+        [roomId]
+      );
+
+      if (quests.length === 0) return res.status(200).json({ success: true, data: null });
+
+      return res.status(200).json({ success: true, data: quests[0] });
     } finally {
       connection.release();
     }

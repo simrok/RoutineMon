@@ -1,5 +1,115 @@
 const pool = require('../db/db');
 
+// [명세서 5.2] GET /rooms/:roomCode/daily-uploads/today — 오늘 방 전체 업로드 현황 조회
+exports.getTodayUploads = async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const { roomCode } = req.params;
+
+    // 방 조회
+    const [rooms] = await connection.query(
+      'SELECT id FROM rooms WHERE room_code = ?', [roomCode]
+    );
+    if (rooms.length === 0) {
+      return res.status(404).json({ success: false, error: '존재하지 않는 방 코드입니다.' });
+    }
+    const roomId = rooms[0].id;
+
+    // KST 기준 오늘 날짜
+    const kstDate = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
+    const today = kstDate.toISOString().split('T')[0];
+
+    // 방의 모든 플레이어 조회
+    const [players] = await connection.query(
+      'SELECT id as playerId, nickname FROM players WHERE room_id = ? ORDER BY slot_number ASC',
+      [roomId]
+    );
+
+    if (players.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          date: today,
+          players: [],
+          dailyQuestProgress: { completedCount: 0, totalCount: 0 }
+        }
+      });
+    }
+
+    const playerIds = players.map(p => p.playerId);
+
+    // 각 플레이어의 루틴 조회
+    const [routines] = await connection.query(
+      'SELECT id as routineId, player_id as playerId FROM routines WHERE player_id IN (?) ORDER BY slot_number ASC',
+      [playerIds]
+    );
+
+    // 오늘 업로드 기록 조회
+    const [uploads] = await connection.query(
+      `SELECT player_id as playerId, routine_id as routineId, image_url as imageUrl
+       FROM daily_uploads
+       WHERE player_id IN (?) AND upload_date = ?`,
+      [playerIds, today]
+    );
+
+    // 조회 결과를 플레이어별로 그룹핑
+    const routineMap = {}; // playerId -> routineId[]
+    for (const r of routines) {
+      if (!routineMap[r.playerId]) routineMap[r.playerId] = [];
+      routineMap[r.playerId].push(r.routineId);
+    }
+
+    const uploadMap = {}; // playerId -> { routineId: imageUrl }
+    for (const u of uploads) {
+      if (!uploadMap[u.playerId]) uploadMap[u.playerId] = {};
+      uploadMap[u.playerId][u.routineId] = u.imageUrl;
+    }
+
+    let dailyQuestCompletedCount = 0;
+
+    const playersData = players.map(player => {
+      const playerRoutineIds = routineMap[player.playerId] ?? [];
+      const playerUploadMap = uploadMap[player.playerId] ?? {};
+
+      const uploadsArr = playerRoutineIds.map(routineId => ({
+        routineId,
+        imageUrl: playerUploadMap[routineId] ?? null
+      }));
+
+      const completedCount = uploadsArr.filter(u => u.imageUrl !== null).length;
+      const isDailyQuestDone = completedCount >= 3;
+
+      if (isDailyQuestDone) dailyQuestCompletedCount++;
+
+      return {
+        playerId: player.playerId,
+        nickname: player.nickname,
+        uploads: uploadsArr,
+        completedCount,
+        isDailyQuestDone
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        date: today,
+        players: playersData,
+        dailyQuestProgress: {
+          completedCount: dailyQuestCompletedCount,
+          totalCount: players.length
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error('❌ 오늘 업로드 현황 조회 에러:', err.message);
+    return res.status(500).json({ success: false, error: '서버 내부 오류가 발생했습니다.' });
+  } finally {
+    connection.release();
+  }
+};
+
 // [명세서 5.1] POST /uploads/daily — 일일 루틴 사진 업로드 및 인증
 exports.uploadDailyRoutine = async (req, res) => {
 

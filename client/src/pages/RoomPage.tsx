@@ -1,8 +1,37 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useRoomStore } from '../store/useRoomStore'
 import './RoomPage.css'
 
 type PartyState = 'none' | 'pending' | 'active'
+
+// ── 파티 퀘스트 상수 ──────────────────────────────────────────
+const PARTY_HOURS = [1, 7, 13, 19] // 실제 발생 시각
+const HOUR_TO_DOT: Record<number, number> = { 1: 0, 7: 1, 13: 2, 19: 3 }
+const COMPLETE_WINDOW_SEC = 7200   // 수락 후 2시간
+const PARTY_QUEST_LS_KEY = 'activePartyQuestInfo'
+
+// TODO: API 연동 시 /rooms/:roomCode/party-quests/active 응답으로 교체
+const MOCK_QUEST_CONTENT = '주변에 있는 빨간 지붕을 찍어라!'
+
+interface PartyQuestInfo {
+  scheduledHour: number // 1 | 7 | 13 | 19
+  content: string
+  acceptedAt: string    // ISO
+  expiresAt: string     // ISO (acceptedAt + 2시간)
+  dotIndex: number      // 0~3
+}
+
+// 테스트 모드: 3시간 윈도우 (실제: 1시간 수락 창)
+const getCurrentPartyHour = (): number | null => {
+  const h = new Date().getHours()
+  return PARTY_HOURS.find(slot => h >= slot && h < slot + 3) ?? null
+}
+
+const getSecondsUntil = (isoString: string) =>
+  Math.max(0, Math.floor((new Date(isoString).getTime() - Date.now()) / 1000))
+
+// ─────────────────────────────────────────────────────────────
 
 const initialPlayers = [
   {
@@ -62,9 +91,50 @@ export default function RoomPage() {
   const [players] = useState(initialPlayers)
   const [homeHover, setHomeHover] = useState(false)
   const [startHover, setStartHover] = useState(false)
-  const [partyState, setPartyState] = useState<PartyState>('pending')
   const [showPartyPopup, setShowPartyPopup] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(7200)
+  const [showSettingsPopup, setShowSettingsPopup] = useState(false)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+  const [copyDone, setCopyDone] = useState(false)
+
+  // ── 파티 퀘스트 상태 (localStorage 기반 초기화) ──────────────
+  const [activeQuestInfo, setActiveQuestInfo] = useState<PartyQuestInfo | null>(() => {
+    const saved = localStorage.getItem(PARTY_QUEST_LS_KEY)
+    if (!saved) return null
+    const info: PartyQuestInfo = JSON.parse(saved)
+    if (getSecondsUntil(info.expiresAt) > 0) return info
+    localStorage.removeItem(PARTY_QUEST_LS_KEY)
+    return null
+  })
+
+  const [partyState, setPartyState] = useState<PartyState>(() => {
+    const saved = localStorage.getItem(PARTY_QUEST_LS_KEY)
+    if (saved) {
+      const info: PartyQuestInfo = JSON.parse(saved)
+      if (getSecondsUntil(info.expiresAt) > 0) return 'active'
+      localStorage.removeItem(PARTY_QUEST_LS_KEY)
+    }
+    return getCurrentPartyHour() !== null ? 'pending' : 'none'
+  })
+
+  // active: 완료까지 남은 시간 (localStorage에서 복원)
+  const [timeLeft, setTimeLeft] = useState<number>(() => {
+    const saved = localStorage.getItem(PARTY_QUEST_LS_KEY)
+    if (!saved) return COMPLETE_WINDOW_SEC
+    const info: PartyQuestInfo = JSON.parse(saved)
+    return getSecondsUntil(info.expiresAt)
+  })
+
+  // pending: 수락 마감까지 남은 시간
+  const [acceptTimeLeft, setAcceptTimeLeft] = useState<number>(() => {
+    const hour = getCurrentPartyHour()
+    if (hour === null) return 0
+    const now = new Date()
+    // 실제: scheduledHour + 1:00 까지 / 테스트: 그것도 지났으면 +3:00 기준
+    let deadline = new Date()
+    deadline.setHours(hour + 1, 0, 0, 0)
+    if (deadline <= now) deadline.setHours(hour + 3, 0, 0, 0)
+    return Math.max(0, Math.floor((deadline.getTime() - now.getTime()) / 1000))
+  })
 
   // ====================
   // DATA VARIABLES
@@ -82,6 +152,15 @@ export default function RoomPage() {
   const activePlayerCount = players.filter((player) => player.active).length
   const dailyCompletedCount = 2
   const partyCompletedCount = partyState === 'active' ? 1 : 0
+
+  const questContent = activeQuestInfo?.content ?? MOCK_QUEST_CONTENT
+
+  // 수락 마감 시각 텍스트 (ex: "02:00까지 수락 가능")
+  const acceptDeadlineText = useMemo(() => {
+    const hour = getCurrentPartyHour()
+    if (hour === null) return ''
+    return `${String(hour + 1).padStart(2, '0')}:00까지 수락 가능`
+  }, [])
 
   // ====================
   // FUNCTIONS
@@ -101,8 +180,74 @@ export default function RoomPage() {
   }
 
   const handleAcceptPartyQuest = () => {
+    const scheduledHour = getCurrentPartyHour() ?? 1
+    const now = new Date()
+    const expiresAt = new Date(now.getTime() + COMPLETE_WINDOW_SEC * 1000).toISOString()
+
+    const info: PartyQuestInfo = {
+      scheduledHour,
+      content: MOCK_QUEST_CONTENT, // TODO: API 연동 시 교체
+      acceptedAt: now.toISOString(),
+      expiresAt,
+      dotIndex: HOUR_TO_DOT[scheduledHour] ?? 0,
+    }
+
+    localStorage.setItem(PARTY_QUEST_LS_KEY, JSON.stringify(info))
+    setActiveQuestInfo(info)
+    setTimeLeft(COMPLETE_WINDOW_SEC)
     setPartyState('active')
     setShowPartyPopup(false)
+  }
+
+  const handleRejectPartyQuest = () => {
+    setPartyState('none')
+    setShowPartyPopup(false)
+  }
+
+  // ── 설정 핸들러 ───────────────────────────────────────────
+  const myPlayer = useRoomStore((s) => s.myPlayer)
+
+  const handleCopyRoomCode = () => {
+    if (!roomCode) return
+    navigator.clipboard.writeText(roomCode).then(() => {
+      setCopyDone(true)
+      setTimeout(() => setCopyDone(false), 2000)
+    })
+  }
+
+  const handleShareRoom = async () => {
+    const shareData = {
+      title: 'RoutineMon',
+      text: `같이 루틴 키울래? 방 코드: ${roomCode}`,
+      url: `${window.location.origin}/join/${roomCode}`,
+    }
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (e) {
+        // 사용자가 공유 취소한 경우 무시
+      }
+    } else {
+      // Web Share API 미지원 브라우저: URL 복사로 폴백
+      navigator.clipboard.writeText(shareData.url)
+      alert('링크가 복사되었습니다.')
+    }
+  }
+
+  const handleLeaveRoom = async () => {
+    if (!myPlayer?.playerId) {
+      navigate('/')
+      return
+    }
+    try {
+      await fetch(`http://localhost:4000/api/players/${myPlayer.playerId}/leave`, {
+        method: 'DELETE',
+      })
+    } catch (e) {
+      console.error('방 나가기 실패:', e)
+    }
+    localStorage.removeItem(PARTY_QUEST_LS_KEY)
+    navigate('/')
   }
 
   const formatTime = (seconds: number) => {
@@ -115,15 +260,34 @@ export default function RoomPage() {
   // ====================
   // EFFECTS
   // ====================
+  // active: 완료 타이머 (만료 시 자동 해제)
   useEffect(() => {
-    let timer: number;
-    if (partyState === 'active' && timeLeft > 0) {
-      timer = window.setInterval(() => {
-        setTimeLeft((prev) => prev - 1)
-      }, 1000)
+    if (partyState !== 'active') return
+    if (timeLeft <= 0) {
+      localStorage.removeItem(PARTY_QUEST_LS_KEY)
+      setActiveQuestInfo(null)
+      setPartyState('none')
+      return
     }
+    const timer = window.setInterval(() => setTimeLeft(prev => prev - 1), 1000)
     return () => clearInterval(timer)
   }, [partyState, timeLeft])
+
+  // pending: 수락 마감 타이머 (만료 시 자동 해제)
+  useEffect(() => {
+    if (partyState !== 'pending') return
+    if (acceptTimeLeft <= 0) {
+      setPartyState('none')
+      return
+    }
+    const timer = window.setInterval(() => {
+      setAcceptTimeLeft(prev => {
+        if (prev <= 1) { setPartyState('none'); return 0 }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [partyState, acceptTimeLeft])
 
   // ====================
   // RENDER
@@ -157,7 +321,7 @@ export default function RoomPage() {
               <img src="/assets/button/custom1.png" alt="custom" />
             </button>
 
-            <button className="roompage-side-btn-setting">
+            <button className="roompage-side-btn-setting" onClick={() => setShowSettingsPopup(true)}>
               <img src="/assets/button/setting1.png" alt="setting" />
             </button>
           </div>
@@ -205,10 +369,7 @@ export default function RoomPage() {
         {/* PLAYERS */}
         <section className="roompage-player-area">
           <div className="roompage-player-title">
-            <span>PLAYER</span>
-            <button>
-              <img src="/assets/button/question.png" alt="question" />
-            </button>
+            <span>PLAYERS</span>
           </div>
 
           <div className="roompage-player-list">
@@ -286,22 +447,22 @@ export default function RoomPage() {
 
           {partyState === 'none' && (
             <p className="roompage-party-empty">
-              현재 파티 퀘스트가 활성화 되지 않았습니다.
+              현재 파티 퀘스트가 없습니다.
             </p>
           )}
 
           {partyState === 'pending' && (
             <>
+              <p className="roompage-party-quest-content">{questContent}</p>
               <p className="roompage-party-alert">
-                파티 퀘스트가 발생했습니다! 수락하시겠습니까?
+                파티 퀘스트가 발생했습니다!<br />
+                {acceptDeadlineText} ({formatTime(acceptTimeLeft)})
               </p>
-
               <div className="roompage-party-actions">
                 <button onClick={() => setShowPartyPopup(true)}>
                   <img src="/assets/button/yes.png" alt="yes" />
                 </button>
-
-                <button onClick={() => setPartyState('none')}>
+                <button onClick={handleRejectPartyQuest}>
                   <img src="/assets/button/no.png" alt="no" />
                 </button>
               </div>
@@ -310,22 +471,77 @@ export default function RoomPage() {
 
           {partyState === 'active' && (
             <>
-              <p className="roompage-party-active">
-                주변에 있는 빨간 지붕을 찍어라!
-              </p>
-
+              <p className="roompage-party-active">{questContent}</p>
               <img
                 className="roompage-party-stars"
                 src={getQuestProgressImage(activePlayerCount, partyCompletedCount)}
                 alt="party progress"
               />
-
-              <div className="roompage-time-limit">
+              <div className={`roompage-time-limit${timeLeft <= 600 ? ' time-critical' : timeLeft <= 1800 ? ' time-warn' : ''}`}>
                 time limit {formatTime(timeLeft)}
               </div>
             </>
           )}
         </section>
+
+        {/* 설정 팝업 */}
+        {showSettingsPopup && (
+          <div className="roompage-modal-backdrop" onClick={() => { setShowSettingsPopup(false); setShowLeaveConfirm(false) }}>
+            <div className="roompage-settings-popup" onClick={(e) => e.stopPropagation()}>
+              <p className="roompage-settings-title">SETTINGS</p>
+
+              {/* 방 코드 복사 */}
+              <div className="roompage-settings-section">
+                <p className="roompage-settings-label">ROOM CODE</p>
+                <div className="roompage-settings-code-row">
+                  <span className="roompage-settings-code">{roomCode}</span>
+                  <button className="roompage-settings-copy-btn" onClick={handleCopyRoomCode}>
+                    {copyDone ? '✓ 복사됨' : '복사'}
+                  </button>
+                </div>
+              </div>
+
+              {/* 공유 버튼 */}
+              <button className="roompage-settings-share-btn" onClick={handleShareRoom}>
+                🔗 방 링크 공유하기
+              </button>
+
+              <div className="roompage-settings-divider" />
+
+              {/* 방 탈퇴 */}
+              {!showLeaveConfirm ? (
+                <button
+                  className="roompage-settings-leave-btn"
+                  onClick={() => setShowLeaveConfirm(true)}
+                >
+                  방 탈퇴하기
+                </button>
+              ) : (
+                <div className="roompage-settings-confirm">
+                  <p className="roompage-settings-confirm-text">탈퇴하면 내 루틴과 기록이<br />모두 삭제됩니다. 계속할까요?</p>
+                  <div className="roompage-settings-confirm-actions">
+                    <button className="roompage-settings-confirm-yes" onClick={handleLeaveRoom}>
+                      <img src="/assets/button/yes.png" alt="yes" />
+                    </button>
+                    <button className="roompage-settings-confirm-no" onClick={() => setShowLeaveConfirm(false)}>
+                      <img src="/assets/button/no.png" alt="no" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="roompage-settings-divider" />
+
+              {/* 닫기 */}
+              <button
+                className="roompage-settings-close-btn"
+                onClick={() => { setShowSettingsPopup(false); setShowLeaveConfirm(false) }}
+              >
+                <img src="/assets/button/yes.png" alt="close" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* MODAL */}
         {showPartyPopup && (
@@ -345,16 +561,21 @@ export default function RoomPage() {
                 />
 
                 <div className="roompage-modal-content-overlay">
-                  <p>주변에 있는 빨간 지붕을 찍어라!</p>
+                  <p>{questContent}</p>
                   <div className="roompage-modal-timer-box">
-                    time limit 2:00:00
+                    수락 시 time limit 2:00:00
                   </div>
                 </div>
               </div>
 
-              <button className="roompage-modal-yes" onClick={handleAcceptPartyQuest}>
-                YES
-              </button>
+              <div className="roompage-modal-actions">
+                <button className="roompage-modal-yes" onClick={handleAcceptPartyQuest}>
+                  <img src="/assets/button/yes.png" alt="yes" />
+                </button>
+                <button className="roompage-modal-no" onClick={handleRejectPartyQuest}>
+                  <img src="/assets/button/no.png" alt="no" />
+                </button>
+              </div>
               
             </div>
           </div>

@@ -11,7 +11,9 @@
 
 1. [공통 응답 형식](#공통-응답-형식)
 2. [방 (Rooms)](#방-rooms)
-3. [플레이어 (Players)](#플레이어-players)
+3. [플레이어 (Players)](#플레이어-players)  
+   - `DELETE /players/:playerId/leave`  
+   - `GET /rooms/:roomCode/players-with-routines`
 4. [루틴 (Routines)](#루틴-routines)
 5. [일일 업로드 (Daily Uploads)](#일일-업로드-daily-uploads)
 6. [파티 퀘스트 (Party Quests)](#파티-퀘스트-party-quests)
@@ -270,6 +272,24 @@
 
 ---
 
+### `DELETE /players/:playerId/leave` — 방 탈퇴
+
+플레이어 레코드를 삭제합니다. CASCADE로 해당 플레이어의 루틴 및 업로드 기록도 함께 삭제됩니다.
+
+**Response**
+
+```json
+{
+  "success": true,
+  "message": "방을 나갔습니다."
+}
+```
+
+**에러**
+- `404` — 존재하지 않는 플레이어 ID
+
+---
+
 ### `GET /players/:playerId/contribution` — 기여도 조회
 
 해당 플레이어의 누적 기여도 점수를 반환합니다.
@@ -308,6 +328,36 @@
   ]
 }
 ```
+
+---
+
+### `GET /rooms/:roomCode/players-with-routines` — 플레이어 + 루틴 목록 조회
+
+방의 플레이어 전체와 각자의 루틴 목록을 함께 반환합니다. UploadPage 플레이어 슬롯 표시에 사용합니다.
+
+**Response**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "playerId": 10,
+      "slotNumber": 1,
+      "nickname": "서영",
+      "skinImageUrl": "https://res.cloudinary.com/.../skin1.png",
+      "routines": [
+        { "slotNumber": 1, "emoji": "🧘", "title": "아침 스트레칭" },
+        { "slotNumber": 2, "emoji": "📚", "title": "독서" },
+        { "slotNumber": 3, "emoji": "💧", "title": "물 마시기" },
+        { "slotNumber": 4, "emoji": "🏃", "title": "운동" }
+      ]
+    }
+  ]
+}
+```
+
+> `skinImageUrl`이 null이면 프론트에서 슬롯 번호 기준 기본 이미지를 사용합니다.
 
 ---
 
@@ -430,6 +480,23 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
 
 ## 파티 퀘스트 (Party Quests)
 
+> **파티 퀘스트 시간 규칙**
+> - 발생 시각: 매일 01 / 07 / 13 / 19시 (서버 cron 자동 생성)
+> - 수락 가능 창: 발생 후 **1시간 이내** (ex: 01:00 발생 → 02:00까지 수락)
+> - 완료 제한 시간: 수락 시각으로부터 **2시간**
+> - 수락 안 하면 `failed`, 시간 초과 시 `failed`로 자동 전환
+>
+> **dot 인덱스 매핑** (프론트 UploadPage 파티 dot 4개)
+>
+> | scheduledHour | dot 인덱스 |
+> |---------------|-----------|
+> | 1 | 0 |
+> | 7 | 1 |
+> | 13 | 2 |
+> | 19 | 3 |
+
+---
+
 ### `GET /rooms/:roomCode/party-quests/active` — 현재 활성 파티 퀘스트 조회
 
 현재 `active` 상태인 파티 퀘스트를 반환합니다. 없으면 `data: null`.
@@ -443,6 +510,7 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
     "partyQuestId": 7,
     "content": "빨간 지붕을 찍어라!",
     "status": "active",
+    "scheduledHour": 7,
     "acceptedByPlayerId": 10,
     "acceptedAt": "2025-06-01T07:05:00Z",
     "expiresAt": "2025-06-01T09:05:00Z",
@@ -457,11 +525,13 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
 }
 ```
 
+> `scheduledHour`로 프론트에서 dot 인덱스 계산: `{ 1:0, 7:1, 13:2, 19:3 }[scheduledHour]`
+
 ---
 
-### `POST /rooms/:roomCode/party-quests/pending` — 대기 중인 파티 퀘스트 조회
+### `GET /rooms/:roomCode/party-quests/pending` — 대기 중인 파티 퀘스트 조회
 
-`pending` 상태(수락 전)의 파티 퀘스트를 반환합니다. 팝업 알림에 사용합니다.
+`pending` 상태(수락 전)의 파티 퀘스트를 반환합니다. RoomPage 팝업 알림에 사용합니다.
 
 **Response**
 
@@ -481,7 +551,7 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
 
 ### `POST /party-quests/:partyQuestId/accept` — 파티 퀘스트 수락
 
-플레이어가 YES를 눌러 퀘스트를 수락합니다. 수락 시 `expiresAt`이 2시간 후로 설정됩니다.
+플레이어가 YES를 눌러 퀘스트를 수락합니다. 수락 시각으로부터 2시간 후가 `expiresAt`으로 설정됩니다.
 
 **Request Body**
 
@@ -507,6 +577,10 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
   }
 }
 ```
+
+**에러**
+- `400` — 이미 수락됐거나 만료된 퀘스트
+- `404` — 존재하지 않는 퀘스트
 
 ---
 
@@ -715,6 +789,20 @@ socket.emit('join-room', { roomCode: '123456', playerId: 10 });
 
 ---
 
+## 서버 스케줄러 (Cron)
+
+`server/src/cron/partyQuestCron.js` — 서버 시작 시 자동 실행 (외부 라이브러리 없음, 순수 Node.js)
+
+| 실행 시각 | 동작 |
+|-----------|------|
+| 매일 01 / 07 / 13 / 19시 | 모든 방에 파티 퀘스트 생성 (`status: pending`) |
+| 매일 02 / 08 / 14 / 20시 | 수락 안 한 퀘스트 자동 만료 (`status: failed`) |
+| 서버 시작 시 + 5분마다 | `expires_at` 지난 active 퀘스트 만료 처리 |
+
+> `party_quest_definitions` 시드 데이터 8개가 DB 초기화 시 자동 삽입됩니다.
+
+---
+
 ## 미구현 예정 (향후 확장)
 
 | 기능 | 비고 |
@@ -722,3 +810,4 @@ socket.emit('join-room', { roomCode: '123456', playerId: 10 });
 | `GET /rooms/:roomCode/logs` | 로그 생성 (당일 사진 묶음 다운로드) |
 | `POST /players/:playerId/pin` | PIN 변경 |
 | 관리자용 `party_quest_definitions` CRUD | 퀘스트 내용 추가/비활성화 |
+| Socket.io `party-quest:new` 이벤트 | cron에서 퀘스트 생성 시 방에 브로드캐스트 (현재 미연결) |
