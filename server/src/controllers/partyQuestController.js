@@ -52,12 +52,21 @@ exports.uploadPartyQuest = async (req, res) => {
 
     const connection = await pool.getConnection();
     try {
-      const [questRows] = await connection.query('SELECT * FROM party_quests WHERE id = ?', [partyQuestId]);
+      // 🌟 소켓 룸 방송을 위해 rooms 테이블과 JOIN하여 room_code를 미리 받아옴
+      const [questRows] = await connection.query(
+        `SELECT pq.*, r.room_code 
+         FROM party_quests pq
+         JOIN rooms r ON pq.room_id = r.id
+         WHERE pq.id = ?`, 
+        [partyQuestId]
+      );
+      
       if (questRows.length === 0) {
         return res.status(404).json({ success: false, error: '존재하지 않는 파티 퀘스트입니다.' });
       }
       const quest = questRows[0];
       const roomId = quest.room_id;
+      const roomCode = quest.room_code; // 소켓 룸 ID로 활용
 
       await connection.beginTransaction();
 
@@ -79,6 +88,11 @@ exports.uploadPartyQuest = async (req, res) => {
 
       let questCompleted = false;
       let expGained = 0;
+      
+      // 소켓 데이터 전송용 변수 사전 선언
+      let isEvolved = false;
+      let monSocketPayload = null;
+      let evolutionSocketPayload = null;
 
       // 3. 전원 참여 시 명세서 규칙대로 퀘스트 'completed' 전환 및 몬스터 보상 경험치 +5% 정산 연산!
       if (uploadedPlayers >= totalPlayers) {
@@ -93,6 +107,7 @@ exports.uploadPartyQuest = async (req, res) => {
           let newExp = Number(mon.exp_percentage || 0) + expGained;
           let currentLevel = Number(mon.level || 1);
           let currentStage = mon.stage || 'EGG';
+          const oldStage = currentStage; // 진화 여부 체크용 원본 스테이지 백업
 
           // 100% 도달 시 레벨업 및 진화 연산 로직 작동
           if (newExp >= 100) {
@@ -106,14 +121,63 @@ exports.uploadPartyQuest = async (req, res) => {
             }
           }
 
+          const finalExpPercentage = Number(newExp.toFixed(2));
+
           await connection.query(
             'UPDATE mons SET level = ?, stage = ?, exp_percentage = ? WHERE room_id = ?',
-            [currentLevel, currentStage, newExp.toFixed(2), roomId]
+            [currentLevel, currentStage, finalExpPercentage, roomId]
           );
+
+          // 🌟 [소켓 페이로드 구성] 변경된 Mon의 실시간 데이터 빌드
+          monSocketPayload = {
+            expPercentage: finalExpPercentage,
+            level: currentLevel,
+            stage: currentStage
+          };
+
+          // 스테이지 단계가 실제로 변했다면 진화 성공
+          if (oldStage !== currentStage) {
+            isEvolved = true;
+            evolutionSocketPayload = {
+              newStage: currentStage,
+              catalogId: mon.catalog_id || 1, // 안전하게 원본 catalog_id 사용
+              name: mon.name || '몬스터'
+            };
+          }
         }
       }
 
       await connection.commit();
+
+      // 🌟 [소켓 실시간 방송 연동부] 명세서 규격 일치화
+      const io = req.app.get('io');
+      if (io && roomCode) {
+        // 1. 누군가 사진을 성공적으로 올림 알림
+        io.to(roomCode).emit('party-quest:upload-updated', {
+          playerId: Number(playerId),
+          validationStatus: "approved"
+        });
+
+        // 2. 만약 전원 참여로 퀘스트가 끝났다면 완료 및 보상 정보 추가 연쇄 방송
+        if (questCompleted) {
+          // 파티 퀘스트 완수 브로드캐스트
+          io.to(roomCode).emit('party-quest:completed', {
+            expGained: expGained,
+            skinReward: null // 명세서 표 기반 스킨 보상이 없다면 null 처리
+          });
+
+          // Mon 경험치 변동 상황 브로드캐스트
+          if (monSocketPayload) {
+            io.to(roomCode).emit('mon:exp-updated', monSocketPayload);
+          }
+
+          // 레벨업 임계치를 넘겨 진화까지 이뤄졌다면 진화 알림 브로드캐스트
+          if (isEvolved && evolutionSocketPayload) {
+            io.to(roomCode).emit('mon:evolved', evolutionSocketPayload);
+          }
+        }
+        console.log(`📡 [소켓 방송] 방 ${roomCode}에 파티 퀘스트 실시간 싱크 방송 완료!`);
+      }
 
       return res.status(201).json({
         success: true,
