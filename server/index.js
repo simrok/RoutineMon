@@ -13,6 +13,8 @@ const monsterRoute = require('./src/routes/monsterRoute');
 const rankingRoute = require('./src/routes/rankingRoute');
 const uploadRoute = require('./src/routes/uploadRoute');
 const partyQuestRoute = require('./src/routes/partyQuestRoute');
+const monCatalogRoutes = require('./src/routes/monCatalogRoutes');
+const skinsRoutes = require('./src/routes/skinsRoutes');
 
 const app = express();
 
@@ -34,6 +36,8 @@ app.use('/api', monsterRoute);
 app.use('/api', rankingRoute);
 app.use('/api', uploadRoute);
 app.use('/api', partyQuestRoute);
+app.use('/api', monCatalogRoutes);
+app.use('/api', skinsRoutes);
 
 // ==========================================================
 // 🌟 [명세서 6번 추가 교정] POST /api/party-quests/:partyQuestId/accept

@@ -146,7 +146,7 @@ const createTables = async () => {
         id INT AUTO_INCREMENT PRIMARY KEY,
         room_id INT NOT NULL UNIQUE,
         catalog_id INT DEFAULT NULL,
-        stage ENUM('egg', 'baby', 'child', 'adult') DEFAULT 'egg',
+        stage ENUM('EGG', 'BABY', 'CHILD', 'ADULT') NOT NULL,
         level TINYINT DEFAULT 1,
         exp_percentage DECIMAL(5,2) DEFAULT 0.00,
         last_quest_completed_date DATE DEFAULT NULL,
