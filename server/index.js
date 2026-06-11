@@ -1,10 +1,17 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
+
+// 업로드 폴더 자동 생성
+['uploads/daily', 'uploads/party-quests'].forEach(dir => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+});
 
 const http = require('http');
 const { Server } = require('socket.io');
-const pool = require('./db/db'); // DB 풀 연결
+const pool = require('./src/db/db');
 
 const roomRoute = require('./src/routes/roomRoute');
 const playerRoutes = require('./src/routes/playerRoutes');
@@ -28,8 +35,8 @@ app.set('io', io);
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 🌟 명세서 기반 라우터 연결
 app.use('/api', roomRoute);
 app.use('/api', playerRoutes);
 app.use('/api', routineRoute);
@@ -37,78 +44,14 @@ app.use('/api', monsterRoute);
 app.use('/api', rankingRoute);
 app.use('/api', uploadRoute);
 app.use('/api', partyQuestRoute);
-app.use('/api', monCatalogRoutes);
+app.use('/api/mon-catalog', monCatalogRoutes);
 app.use('/api', skinsRoutes);
-
-// ==========================================================
-// 🌟 [명세서 6번 추가 교정] POST /api/party-quests/:partyQuestId/accept
-// ==========================================================
-app.post('/api/party-quests/:partyQuestId/accept', async (req, res) => {
-  const { partyQuestId } = req.params;
-  const { playerId } = req.body;
-
-  if (!playerId) {
-    return res.status(400).json({ success: false, error: 'playerId가 누락되었습니다.' });
-  }
-
-  const connection = await pool.getConnection();
-  try {
-    // 현재 룸 코드 조회를 위해 JOIN
-    const [questRows] = await connection.query(
-      "SELECT pq.*, r.room_code FROM party_quests pq JOIN rooms r ON pq.room_id = r.id WHERE pq.id = ?",
-      [partyQuestId]
-    );
-
-    if (questRows.length === 0) {
-      return res.status(404).json({ success: false, error: '존재하지 않는 파티 퀘스트입니다.' });
-    }
-
-    const roomCode = questRows[0].room_code;
-    
-    // 만료 시간 설정 (현재 시간 기준 2시간 후)
-    const kstOffset = 9 * 60 * 60 * 1000;
-    const expiresAtDate = new Date(new Date().getTime() + kstOffset + (2 * 60 * 60 * 1000));
-    const expiresAt = expiresAtDate.toISOString().slice(0, 19).replace('T', ' ');
-
-    // 🌟 상태를 pending -> active로 변경 및 수락 유저 기록
-    await connection.query(
-      "UPDATE party_quests SET status = 'active', accepted_by_player_id = ?, expires_at = ? WHERE id = ?",
-      [playerId, expiresAt, partyQuestId]
-    );
-
-    // 📡 [명세서 10번 소켓 송출] party-quest:accepted 발송
-    const ioServer = req.app.get('io');
-    if (ioServer && roomCode) {
-      ioServer.to(roomCode).emit('party-quest:accepted', {
-        partyQuestId: Number(partyQuestId),
-        acceptedByPlayerId: Number(playerId),
-        expiresAt: expiresAtDate.toISOString() // 표준 ISO 형식 제공
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        partyQuestId: Number(partyQuestId),
-        status: "active",
-        expiresAt: expiresAtDate.toISOString()
-      }
-    });
-
-  } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
-  } finally {
-    connection.release();
-  }
-});
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// ==========================================
-// 📡 Socket.io 클라이언트 커넥션 허브
-// ==========================================
+// ── Socket.io ─────────────────────────────────────────────────
 const socketRegistry = {};
 
 io.on('connection', (socket) => {
@@ -156,57 +99,9 @@ io.on('connection', (socket) => {
   });
 });
 
-// ==========================================
-// ⏰ [명세서 교정 스케줄러] 정각 시 퀘스트를 'pending' 상태로 발급
-// ==========================================
-setInterval(async () => {
-  const now = new Date();
-  const kstOffset = 9 * 60 * 60 * 1000;
-  const kstDate = new Date(now.getTime() + kstOffset);
-  
-  const hours = kstDate.getUTCHours();
-  const minutes = kstDate.getUTCMinutes();
-
-  if ((hours === 1 || hours === 7 || hours === 13 || hours === 19) && minutes === 0) {
-    try {
-      // 1. 미완료된 기존 활성 퀘스트들은 만료 실패 처리
-      const [activeQuests] = await pool.query(
-        "SELECT pq.id, r.room_code FROM party_quests pq JOIN rooms r ON pq.room_id = r.id WHERE pq.status IN ('active', 'accepted')"
-      );
-      for (const quest of activeQuests) {
-        await pool.query("UPDATE party_quests SET status = 'failed' WHERE id = ?", [quest.id]);
-        io.to(quest.room_code).emit('party-quest:failed', { partyQuestId: Number(quest.id) });
-      }
-
-      // 2. 모든 방에 명세서 맞춤형 'pending' 대기 상태 퀘스트 발급
-      const [rooms] = await pool.query("SELECT id, room_code FROM rooms");
-      for (const room of rooms) {
-        const [defs] = await pool.query("SELECT id, content FROM party_quest_definitions ORDER BY RAND() LIMIT 1");
-        if (defs.length > 0) {
-          const definitionId = defs[0].id;
-          const content = defs[0].content;
-
-          const [insertResult] = await pool.query(
-            "INSERT INTO party_quests (room_id, definition_id, status) VALUES (?, ?, 'pending')",
-            [room.id, definitionId]
-          );
-
-          // 📡 [명세서 10번] 새 퀘스트 알림 전송
-          io.to(room.room_code).emit('party-quest:new', {
-            partyQuestId: Number(insertResult.insertId),
-            content: content
-          });
-        }
-      }
-    } catch (err) {
-      console.error("스케줄러 에러:", err.message);
-    }
-  }
-}, 60000);
-
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`✅ 서버가 http://localhost:${PORT} 에서 실행 중입니다!`);
-  startPartyQuestCron();
+  startPartyQuestCron(io);
 });

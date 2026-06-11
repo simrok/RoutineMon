@@ -92,17 +92,20 @@ const createTables = async () => {
       );
     `);
 
-    // 6-1. party_quest_definitions 시드 데이터 (없을 때만 INSERT)
+    // 6-1. party_quest_definitions 시드 데이터 (내용 변경 시 업데이트)
     await connection.query(`
-      INSERT IGNORE INTO party_quest_definitions (id, content, is_active) VALUES
-        (1, '주변에 있는 빨간 지붕을 찍어라!', TRUE),
-        (2, '브이를 하고 셀카를 찍으세요!', TRUE),
-        (3, '하늘이 보이는 곳에서 사진을 찍어라!', TRUE),
-        (4, '지금 먹고 있는 음식을 찍어라!', TRUE),
-        (5, '나무 또는 식물과 함께 사진을 찍어라!', TRUE),
-        (6, '오늘 신은 신발을 찍어라!', TRUE),
-        (7, '창문 밖 풍경을 찍어라!', TRUE),
-        (8, '지금 손에 들고 있는 것을 찍어라!', TRUE);
+      INSERT INTO party_quest_definitions (id, content, is_active) VALUES
+        (1, '지금 먹고 있는 음식을 찍어라!', TRUE),
+        (2, '식물이나 꽃과 함께 찍어라!', TRUE),
+        (3, '웃는 표정으로 셀카를 찍어라!', TRUE),
+        (4, '음료를 손에 들고 찍어라!', TRUE),
+        (5, '책을 들고 있는 사진을 찍어라!', TRUE),
+        (6, '신발 신은 발을 찍어라!', TRUE),
+        (7, '손바닥을 카메라에 보여줘라!', TRUE),
+        (8, '과일이나 채소를 찍어라!', TRUE),
+        (9, '거울에 비친 자신을 찍어라!', TRUE),
+        (10, '엄지척 포즈로 셀카를 찍어라!', TRUE)
+      ON DUPLICATE KEY UPDATE content = VALUES(content), is_active = VALUES(is_active);
     `);
 
     // 7. party_quests 테이블

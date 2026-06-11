@@ -235,7 +235,7 @@
 
 ### `PATCH /players/:playerId` — 플레이어 정보 수정
 
-닉네임 또는 현재 스킨을 변경합니다. PIN 인증 필요 (`X-Player-Pin` 헤더).
+닉네임, 캐릭터 색상, 현재 스킨을 변경합니다. PIN 인증 필요 (`X-Player-Pin` 헤더).
 
 **Request Header**
 
@@ -247,13 +247,14 @@
 
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
-| nickname | string | ❌ | 새 닉네임 |
+| nickname | string | ❌ | 새 닉네임 (한글/영문/숫자, 1~7자) |
+| characterType | string | ❌ | 캐릭터 색상 (`white` / `green` / `blue` / `yellow` / `red`) |
 | currentSkinId | number \| null | ❌ | 적용할 스킨 ID (null이면 기본 스킨) |
 
 ```json
 {
   "nickname": "서영이",
-  "currentSkinId": 3
+  "characterType": "blue"
 }
 ```
 
@@ -265,7 +266,8 @@
   "data": {
     "playerId": 10,
     "nickname": "서영이",
-    "currentSkinId": 3
+    "characterType": "blue",
+    "currentSkinId": null
   }
 }
 ```
@@ -345,7 +347,8 @@
       "playerId": 10,
       "slotNumber": 1,
       "nickname": "서영",
-      "skinImageUrl": "https://res.cloudinary.com/.../skin1.png",
+      "characterType": "blue",
+      "skinImageUrl": null,
       "routines": [
         { "slotNumber": 1, "emoji": "🧘", "title": "아침 스트레칭" },
         { "slotNumber": 2, "emoji": "📚", "title": "독서" },
@@ -357,7 +360,8 @@
 }
 ```
 
-> `skinImageUrl`이 null이면 프론트에서 슬롯 번호 기준 기본 이미지를 사용합니다.
+> `characterType`: 플레이어가 설정한 캐릭터 색상 (`white` / `green` / `blue` / `yellow` / `red`). 미설정 시 슬롯 번호 기준 기본값.  
+> `skinImageUrl`이 null이면 프론트에서 `characterType` 기준 기본 이미지를 사용합니다.
 
 ---
 
@@ -416,7 +420,7 @@
 ### `POST /players/:playerId/daily-uploads` — 루틴 사진 업로드
 
 루틴 인증 사진을 업로드합니다. `multipart/form-data` 형식을 사용합니다.  
-Cloudinary 업로드 후 URL을 DB에 저장합니다.
+multer로 서버 로컬(`uploads/daily/`)에 저장하고 URL을 DB에 기록합니다.
 
 **Request** (`multipart/form-data`)
 
@@ -433,8 +437,9 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
   "data": {
     "uploadId": 55,
     "routineId": 2,
-    "imageUrl": "https://res.cloudinary.com/.../photo.jpg",
-    "uploadDate": "2025-06-01"
+    "imageUrl": "/uploads/daily/photo.jpg",
+    "uploadDate": "2025-06-01",
+    "uploadTime": "2025-06-01T08:32:00Z"
   }
 }
 ```
@@ -457,10 +462,10 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
         "playerId": 10,
         "nickname": "서영",
         "uploads": [
-          { "routineId": 1, "imageUrl": "https://res.cloudinary.com/.../1.jpg" },
-          { "routineId": 2, "imageUrl": "https://res.cloudinary.com/.../2.jpg" },
-          { "routineId": 3, "imageUrl": null },
-          { "routineId": 4, "imageUrl": null }
+          { "routineId": 1, "imageUrl": "/uploads/daily/1.jpg", "uploadTime": "2025-06-01T07:12:00Z" },
+          { "routineId": 2, "imageUrl": "/uploads/daily/2.jpg", "uploadTime": "2025-06-01T08:33:00Z" },
+          { "routineId": 3, "imageUrl": null, "uploadTime": null },
+          { "routineId": 4, "imageUrl": null, "uploadTime": null }
         ],
         "completedCount": 2,
         "isDailyQuestDone": false
@@ -478,11 +483,60 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
 
 ---
 
+### `DELETE /players/:playerId/daily-uploads/:routineId` — 일일 업로드 삭제
+
+오늘 업로드한 특정 루틴 사진을 삭제합니다.
+
+**Response**
+
+```json
+{
+  "success": true
+}
+```
+
+**에러**
+- `404` — 해당 루틴을 찾을 수 없음
+
+---
+
+### `GET /rooms/:roomCode/players/contribution-counts` — 방 플레이어별 누적 업로드 수
+
+방의 모든 플레이어 누적 업로드 수(일일 + 파티 합산)를 반환합니다.
+
+**Response**
+
+```json
+{
+  "success": true,
+  "data": [
+    { "playerId": 10, "count": 28 },
+    { "playerId": 11, "count": 15 }
+  ]
+}
+```
+
+---
+
+### `DELETE /players/:playerId/cancel` — 플레이어 등록 취소
+
+루틴 미설정 상태에서 이전 버튼으로 등록을 취소합니다. 플레이어 레코드를 삭제합니다.
+
+**Response**
+
+```json
+{
+  "success": true
+}
+```
+
+---
+
 ## 파티 퀘스트 (Party Quests)
 
 > **파티 퀘스트 시간 규칙**
-> - 발생 시각: 매일 01 / 07 / 13 / 19시 (서버 cron 자동 생성)
-> - 수락 가능 창: 발생 후 **1시간 이내** (ex: 01:00 발생 → 02:00까지 수락)
+> - 발생 시각: 매일 01 / 07 / 13 / 19시 (서버 스케줄러 자동 생성)
+> - 수락 가능 창: 발생 후 **2시간 30분 이내** (ex: 01:00 발생 → 03:30까지 수락)
 > - 완료 제한 시간: 수락 시각으로부터 **2시간**
 > - 수락 안 하면 `failed`, 시간 초과 시 `failed`로 자동 전환
 >
@@ -517,7 +571,7 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
     "uploads": [
       {
         "playerId": 10,
-        "imageUrl": "https://res.cloudinary.com/.../pq1.jpg",
+        "imageUrl": "/uploads/party-quests/pq1.jpg",
         "validationStatus": "approved"
       }
     ]
@@ -586,7 +640,7 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
 
 ### `POST /party-quests/:partyQuestId/uploads` — 파티 퀘스트 사진 업로드
 
-파티 퀘스트 인증 사진을 업로드합니다. 업로드 후 Claude Vision API로 자동 검증합니다.
+파티 퀘스트 인증 사진을 업로드합니다. 업로드 즉시 Claude Vision API(Haiku)로 동기 검증하고 결과를 바로 반환합니다.
 
 **Request** (`multipart/form-data`)
 
@@ -595,26 +649,41 @@ Cloudinary 업로드 후 URL을 DB에 저장합니다.
 | playerId | number | ✅ | 업로드한 플레이어 ID |
 | image | file | ✅ | 이미지 파일 |
 
-**Response**
+**Response (approved)**
 
 ```json
 {
   "success": true,
   "data": {
     "uploadId": 33,
-    "validationStatus": "pending",
-    "message": "이미지를 검증 중입니다..."
+    "validationStatus": "approved",
+    "allUploaded": false
   }
 }
 ```
 
-> **검증 결과**는 Socket.io `party-quest:validation-result` 이벤트로 수신
+**Response (rejected)**
+
+```json
+{
+  "success": true,
+  "data": {
+    "uploadId": 33,
+    "validationStatus": "rejected",
+    "reason": "퀘스트 내용과 일치하지 않습니다. 다시 시도해주세요."
+  }
+}
+```
+
+> - `approved` 시 해당 플레이어의 기여 처리 후 `party-quest:upload-updated` 소켓 이벤트 emit  
+> - 방의 모든 플레이어가 approved 완료 시 퀘스트 `completed` 처리 + `party-quest:completed` emit  
+> - `rejected` 시 DB 레코드는 저장되지 않으며 재업로드 가능
 
 ---
 
 ## 루틴몬 (Mons)
 
-### `GET /rooms/:roomCode/mon` — 루틴몬 현황 조회
+### `GET /rooms/:roomCode/monster` — 루틴몬 현황 조회
 
 방의 루틴몬 현재 상태를 반환합니다.
 
@@ -766,7 +835,7 @@ socket.emit('join-room', { roomCode: '123456', playerId: 10 });
 | `room:player-left` | 플레이어 퇴장 | `{ playerId }` |
 | `daily:upload-updated` | 누군가 루틴 사진 업로드 | `{ playerId, routineId, uploadedCount }` |
 | `daily:quest-completed` | 방 전체 일일 퀘스트 완료 | `{ expGained: 20 }` |
-| `party-quest:new` | 새 파티 퀘스트 발생 (01/07/13/19시) | `{ partyQuestId, content }` |
+| `party-quest:new` | 새 파티 퀘스트 발생 (01/07/13/19시) | `{ partyQuestId, content, scheduledHour }` |
 | `party-quest:accepted` | 누군가 파티 퀘스트 수락 | `{ partyQuestId, acceptedByPlayerId, expiresAt }` |
 | `party-quest:upload-updated` | 누군가 파티 퀘스트 사진 업로드 | `{ playerId, validationStatus }` |
 | `party-quest:validation-result` | AI 검증 결과 수신 | `{ partyQuestId, playerId, result: "approved" \| "rejected" }` |
@@ -795,11 +864,11 @@ socket.emit('join-room', { roomCode: '123456', playerId: 10 });
 
 | 실행 시각 | 동작 |
 |-----------|------|
-| 매일 01 / 07 / 13 / 19시 | 모든 방에 파티 퀘스트 생성 (`status: pending`) |
-| 매일 02 / 08 / 14 / 20시 | 수락 안 한 퀘스트 자동 만료 (`status: failed`) |
-| 서버 시작 시 + 5분마다 | `expires_at` 지난 active 퀘스트 만료 처리 |
+| 매일 01:00 / 07:00 / 13:00 / 19:00 | 모든 방에 파티 퀘스트 생성 (`status: pending`), `party-quest:new` emit |
+| 매일 03:30 / 09:30 / 15:30 / 21:30 | 수락 안 한 퀘스트 자동 만료 (`status: failed`), `party-quest:failed` emit |
+| 서버 시작 시 | 기존 active 퀘스트 중 `expires_at` 초과 시 즉시 만료 처리 |
 
-> `party_quest_definitions` 시드 데이터 8개가 DB 초기화 시 자동 삽입됩니다.
+> `party_quest_definitions` 시드 데이터 10개가 DB 초기화 시 자동 삽입됩니다 (`INSERT INTO ... ON DUPLICATE KEY UPDATE`).
 
 ---
 
@@ -810,4 +879,3 @@ socket.emit('join-room', { roomCode: '123456', playerId: 10 });
 | `GET /rooms/:roomCode/logs` | 로그 생성 (당일 사진 묶음 다운로드) |
 | `POST /players/:playerId/pin` | PIN 변경 |
 | 관리자용 `party_quest_definitions` CRUD | 퀘스트 내용 추가/비활성화 |
-| Socket.io `party-quest:new` 이벤트 | cron에서 퀘스트 생성 시 방에 브로드캐스트 (현재 미연결) |

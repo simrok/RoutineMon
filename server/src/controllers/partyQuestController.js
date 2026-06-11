@@ -1,6 +1,9 @@
 const pool = require('../db/db');
+const path = require('path');
+const fs = require('fs');
+const { validateImageForQuest } = require('../utils/validateImage');
 
-// [명세서 6.2] GET /api/rooms/:roomCode/party-quest — 현재 진행 중인 파티 퀘스트 조회
+// GET /api/rooms/:roomCode/party-quests/active — 현재 active 파티 퀘스트 조회
 exports.getActivePartyQuest = async (req, res) => {
   try {
     const { roomCode } = req.params;
@@ -16,10 +19,10 @@ exports.getActivePartyQuest = async (req, res) => {
 
       // 2. 유나의 진짜 컬럼 구조(content) 반영해서 쿼리 수정!
       const [questRows] = await connection.query(
-        `SELECT pq.id AS partyQuestId, pq.status, pq.expires_at AS expiresAt, pqd.content 
+        `SELECT pq.id AS partyQuestId, pq.status, pq.expires_at AS expiresAt, pq.scheduled_hour AS scheduledHour, pqd.content
          FROM party_quests pq
          JOIN party_quest_definitions pqd ON pq.definition_id = pqd.id
-         WHERE pq.room_id = ? AND pq.status IN ('active', 'accepted')
+         WHERE pq.room_id = ? AND pq.status = 'active'
          ORDER BY pq.id DESC LIMIT 1`,
         [roomId]
       );
@@ -28,7 +31,15 @@ exports.getActivePartyQuest = async (req, res) => {
         return res.status(200).json({ success: true, data: null });
       }
 
-      return res.status(200).json({ success: true, data: questRows[0] });
+      const quest = questRows[0];
+
+      // 현재 퀘스트 업로드 목록 조회
+      const [uploadRows] = await connection.query(
+        'SELECT player_id as playerId, image_url as imageUrl FROM party_quest_uploads WHERE party_quest_id = ?',
+        [quest.partyQuestId]
+      );
+
+      return res.status(200).json({ success: true, data: { ...quest, uploads: uploadRows } });
 
     } catch (error) {
       return res.status(400).json({ success: false, error: error.message });
@@ -40,24 +51,114 @@ exports.getActivePartyQuest = async (req, res) => {
   }
 };
 
-// [명세서 6.3] POST /api/party-quests/:partyQuestId/upload — 파티 퀘스트 사진 업로드 (인증 및 기여)
+// GET /api/rooms/:roomCode/party-quests/pending — 수락 대기 중인 파티 퀘스트 조회
+exports.getPendingPartyQuest = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const [roomRows] = await pool.query('SELECT id FROM rooms WHERE room_code = ?', [roomCode]);
+    if (roomRows.length === 0) {
+      return res.status(404).json({ success: false, error: '존재하지 않는 방 코드입니다.' });
+    }
+    const roomId = roomRows[0].id;
+
+    const [questRows] = await pool.query(
+      `SELECT pq.id AS partyQuestId, pq.scheduled_hour AS scheduledHour, pq.status, pqd.content
+       FROM party_quests pq
+       JOIN party_quest_definitions pqd ON pq.definition_id = pqd.id
+       WHERE pq.room_id = ? AND pq.status = 'pending'
+       ORDER BY pq.id DESC LIMIT 1`,
+      [roomId]
+    );
+
+    if (questRows.length === 0) {
+      return res.status(200).json({ success: true, data: null });
+    }
+    return res.status(200).json({ success: true, data: questRows[0] });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류 발생' });
+  }
+};
+
+// POST /api/party-quests/:partyQuestId/accept — 파티 퀘스트 수락
+exports.acceptPartyQuest = async (req, res) => {
+  const { partyQuestId } = req.params;
+  const { playerId } = req.body;
+
+  if (!playerId) {
+    return res.status(400).json({ success: false, error: 'playerId는 필수입니다.' });
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    const [questRows] = await connection.query(
+      `SELECT pq.*, r.room_code FROM party_quests pq
+       JOIN rooms r ON pq.room_id = r.id
+       WHERE pq.id = ?`,
+      [partyQuestId]
+    );
+
+    if (questRows.length === 0) {
+      return res.status(404).json({ success: false, error: '존재하지 않는 파티 퀘스트입니다.' });
+    }
+    const quest = questRows[0];
+    if (quest.status !== 'pending') {
+      return res.status(400).json({ success: false, error: '이미 수락됐거나 만료된 퀘스트입니다.' });
+    }
+
+    // 수락 시각 기준 +2시간
+    const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+
+    await connection.query(
+      `UPDATE party_quests
+       SET status = 'active', accepted_by_player_id = ?, accepted_at = NOW(), expires_at = ?
+       WHERE id = ?`,
+      [playerId, expiresAt, partyQuestId]
+    );
+
+    const io = req.app.get('io');
+    if (io && quest.room_code) {
+      io.to(quest.room_code).emit('party-quest:accepted', {
+        partyQuestId: Number(partyQuestId),
+        acceptedByPlayerId: Number(playerId),
+        expiresAt: expiresAt.toISOString(),
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        partyQuestId: Number(partyQuestId),
+        status: 'active',
+        expiresAt: expiresAt.toISOString(),
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류 발생' });
+  } finally {
+    connection.release();
+  }
+};
+
+// POST /api/party-quests/:partyQuestId/upload — 파티 퀘스트 사진 업로드 (인증 및 기여)
 exports.uploadPartyQuest = async (req, res) => {
   try {
     const { partyQuestId } = req.params;
-    const { playerId, imageUrl } = req.body;
+    const { playerId } = req.body;
+    const imageUrl = req.file ? `/uploads/party-quests/${req.file.filename}` : req.body.imageUrl;
 
     if (!playerId || !imageUrl) {
-      return res.status(400).json({ success: false, error: 'playerId와 imageUrl은 필수입니다.' });
+      return res.status(400).json({ success: false, error: 'playerId와 image는 필수입니다.' });
     }
 
     const connection = await pool.getConnection();
     try {
-      // 🌟 소켓 룸 방송을 위해 rooms 테이블과 JOIN하여 room_code를 미리 받아옴
+      // 소켓 방송 + AI 판별용으로 퀘스트 내용(content)도 함께 조회
       const [questRows] = await connection.query(
-        `SELECT pq.*, r.room_code 
+        `SELECT pq.*, r.room_code, pqd.content
          FROM party_quests pq
          JOIN rooms r ON pq.room_id = r.id
-         WHERE pq.id = ?`, 
+         JOIN party_quest_definitions pqd ON pq.definition_id = pqd.id
+         WHERE pq.id = ?`,
         [partyQuestId]
       );
       
@@ -66,24 +167,50 @@ exports.uploadPartyQuest = async (req, res) => {
       }
       const quest = questRows[0];
       const roomId = quest.room_id;
-      const roomCode = quest.room_code; // 소켓 룸 ID로 활용
+      const roomCode = quest.room_code;
+
+      // 이미 완료된 퀘스트엔 업로드 차단
+      if (quest.status === 'completed') {
+        connection.release();
+        return res.status(409).json({ success: false, error: '이미 완료된 파티 퀘스트입니다.' });
+      }
+
+      // 🤖 AI 이미지 판별
+      const questContent = quest.content; // party_quest_definitions.content (JOIN 필요)
+      let aiApproved = true;
+      if (req.file) {
+        const localPath = path.join(__dirname, '../../uploads/party-quests', req.file.filename);
+        const { approved, reason } = await validateImageForQuest(localPath, questContent);
+        aiApproved = approved;
+        if (!approved) {
+          // 거절된 파일 삭제
+          try { fs.unlinkSync(localPath); } catch (_) {}
+          connection.release();
+          return res.status(400).json({ success: false, error: reason });
+        }
+      }
 
       await connection.beginTransaction();
 
-      // 1. 파티 퀘스트 업로드 테이블에 데이터 인서트 (Mock 검증 상태는 기본 approved 처리)
+      // 1. 파티 퀘스트 업로드 테이블에 데이터 인서트
       const [uploadResult] = await connection.query(
         'INSERT INTO party_quest_uploads (party_quest_id, player_id, image_url, validation_status) VALUES (?, ?, ?, "approved")',
         [partyQuestId, playerId, imageUrl]
       );
 
-      // 2. [설계도 가중치 규칙용] 방 안의 모든 플레이어가 전부 참여했는지 체크하기
-      const [playerCountRows] = await connection.query('SELECT COUNT(*) AS total FROM players WHERE room_id = ?', [roomId]);
+      // 2. [설계도 가중치 규칙용] 수락 시점 스냅샷 인원 기준으로 전원 참여 여부 체크
+      // accepted_player_count가 없으면(구버전 레코드) 현재 방 인원을 fallback으로 사용
+      let totalPlayers = quest.accepted_player_count;
+      if (!totalPlayers) {
+        const [playerCountRows] = await connection.query('SELECT COUNT(*) AS total FROM players WHERE room_id = ?', [roomId]);
+        totalPlayers = playerCountRows[0].total;
+      }
+
       const [uploadedCountRows] = await connection.query(
         'SELECT COUNT(DISTINCT player_id) AS uploaded FROM party_quest_uploads WHERE party_quest_id = ? AND validation_status = "approved"',
         [partyQuestId]
       );
 
-      const totalPlayers = playerCountRows[0].total;
       const uploadedPlayers = uploadedCountRows[0].uploaded;
 
       let questCompleted = false;
@@ -198,5 +325,41 @@ exports.uploadPartyQuest = async (req, res) => {
     }
   } catch (err) {
     return res.status(500).json({ success: false, error: '서버 내부 오류 발생' });
+  }
+};
+
+// DELETE /api/party-quests/:partyQuestId/uploads/:playerId — 파티 퀘스트 사진 삭제
+exports.deletePartyUpload = async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const { partyQuestId, playerId } = req.params;
+
+    const [questRows] = await connection.query(
+      `SELECT pq.status, r.room_code
+       FROM party_quests pq JOIN rooms r ON pq.room_id = r.id
+       WHERE pq.id = ?`,
+      [partyQuestId]
+    );
+    if (questRows.length === 0) {
+      return res.status(404).json({ success: false, error: '존재하지 않는 파티 퀘스트입니다.' });
+    }
+    if (questRows[0].status === 'completed') {
+      return res.status(400).json({ success: false, error: '완료된 퀘스트의 사진은 삭제할 수 없습니다.' });
+    }
+
+    const roomCode = questRows[0].room_code;
+    await connection.query(
+      'DELETE FROM party_quest_uploads WHERE party_quest_id = ? AND player_id = ?',
+      [partyQuestId, playerId]
+    );
+
+    const io = req.app.get('io');
+    if (io) io.to(roomCode).emit('party-quest:upload-deleted', { playerId: Number(playerId) });
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류 발생' });
+  } finally {
+    connection.release();
   }
 };

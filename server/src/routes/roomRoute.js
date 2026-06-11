@@ -46,10 +46,11 @@ router.post('/party-quests/:partyQuestId/uploads', upload.single('image'), roomC
 // 명세서 10: 시뮬레이션
 router.post('/party-quests/:partyQuestId/simulate-complete', roomController.simulatePartyQuestComplete);
 
+// max_players 1 증가
+router.patch('/rooms/:roomCode/max-players', roomController.expandMaxPlayers);
+
 // 명세서 5.2: 오늘 일일 업로드 현황 조회
 router.get('/rooms/:roomCode/daily-uploads/today', roomController.getDailyUploadStatus);
 
-// 파티별 일일 퀘스트 업로드 현황 조회 API
-router.get('/:partyId/uploads', roomController.getPartyUploads);
 
 module.exports = router;

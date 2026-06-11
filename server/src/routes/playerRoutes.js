@@ -17,6 +17,9 @@ router.patch('/players/:playerId', playerController.updatePlayer);
 // 방 나가기
 router.delete('/players/:playerId/leave', playerController.leaveRoom);
 
+// 루틴 미설정 플레이어 등록 취소 (이전 버튼)
+router.delete('/players/:playerId/cancel', playerController.cancelRegistration);
+
 // 플레이어 누적 기여도 조회
 router.get('/players/:playerId/contribution', playerController.getContribution);
 
