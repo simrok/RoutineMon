@@ -12,6 +12,7 @@ import RankingPage from './pages/RankingPage'
 import CharacterCustomPage from "./pages/CharacterCustomPage";
 import RoutinemonDexPage from "./pages/RoutinemonDexPage";
 import LogCreatePage from './pages/LogCreatePage'
+import RoutineSetupPage from './pages/RoutineSetupPage'
 
 function App() {
   return (
@@ -22,12 +23,14 @@ function App() {
         {/* 방 신설 흐름 (roomCode 없음 — 닉네임/PIN 완료 시 방 생성) */}
         <Route path="/create/select" element={<CharacterSelectPage />} />
         <Route path="/create/setup/:slotNumber" element={<NicknameSetupPage />} />
+        <Route path="/create/routines" element={<RoutineSetupPage />} />
 
         {/* 방 참가 흐름 (roomCode 있음) */}
         <Route path="/join/:roomCode" element={<JoinPage />} />
         <Route path="/join/:roomCode/select" element={<CharacterSelectPage />} />
         <Route path="/join/:roomCode/setup/:slotNumber" element={<NicknameSetupPage />} />
         <Route path="/join/:roomCode/verify/:slotNumber" element={<PinVerifyPage />} />
+        <Route path="/join/:roomCode/routines" element={<RoutineSetupPage />} />
 
         {/* 플레이어 룸 */}
         <Route path="/room/:roomCode" element={<RoomPage />} />

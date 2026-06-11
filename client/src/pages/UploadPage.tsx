@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
+import { getSocket, joinRoom, leaveRoom } from '../socket'
 import './UploadPage.css'
 
 // ── 타입 ─────────────────────────────────────────────────────
-type Routine = {
-  emoji: string
-  content: string
-}
+type Routine = { emoji: string; content: string }
 
 type Player = {
   id: number
@@ -17,37 +15,34 @@ type Player = {
   routines: Routine[]
 }
 
-type DailyLogEntry = {
-  memberId: number
-  routineIndex: number
-  imageUrl: string
-  uploadedAt: string
-}
+// 일일 업로드: routineId(DB) + imageUrl + uploadTime (HH:MM)
+type DailySlot = { routineId: number; imageUrl: string | null; uploadTime: string | null }
 
-type PartyLogEntry = {
-  memberId: number
-  dotIndex: number   // 0~3 (파티퀘스트 시간대)
-  imageUrl: string
-  uploadedAt: string
-}
+// 파티 퀘스트
+type PartyUpload = { playerId: number; imageUrl: string; uploadTime: string | null }
 
-interface PartyQuestInfo {
-  scheduledHour: number  // 1 | 7 | 13 | 19
-  content: string
-  acceptedAt: string
+type ActivePartyQuest = {
+  partyQuestId: number
+  status: string
   expiresAt: string
-  dotIndex: number       // 0~3
+  scheduledHour: number
+  content: string
+  uploads: PartyUpload[]
 }
 
 type UploadMode = 'daily' | 'party'
-type DeleteMode = 'daily' | 'party'
 
 // ── 상수 ─────────────────────────────────────────────────────
-const PARTY_QUEST_LS_KEY = 'activePartyQuestInfo'
-const PARTY_LOGS_LS_KEY = 'routinePartyLogs'
 const API_BASE = 'http://localhost:4000/api'
+const SERVER_BASE = 'http://localhost:4000'
 
-// 슬롯 번호 → CSS 색상 클래스 (store의 DEFAULT_PLAYER_COLORS와 동일)
+const toAbsoluteUrl = (url: string | null) => {
+  if (!url) return null
+  if (url.startsWith('http')) return url
+  return `${SERVER_BASE}${url}`
+}
+
+
 const SLOT_COLOR_CLASS: Record<number, string> = {
   1: 'uploadscreen-white',
   2: 'uploadscreen-green',
@@ -56,7 +51,13 @@ const SLOT_COLOR_CLASS: Record<number, string> = {
   5: 'uploadscreen-red',
 }
 
-// 슬롯 번호 → 기본 캐릭터 이미지 (스킨 미설정 시 fallback)
+const CHARACTER_TYPE_COLOR_CLASS: Record<string, string> = {
+  white:  'uploadscreen-white',
+  green:  'uploadscreen-green',
+  blue:   'uploadscreen-blue',
+  yellow: 'uploadscreen-yellow',
+  red:    'uploadscreen-red',
+}
 const SLOT_DEFAULT_IMAGE: Record<number, string> = {
   1: '/assets/player/player_white.png',
   2: '/assets/player/player_green.png',
@@ -64,6 +65,8 @@ const SLOT_DEFAULT_IMAGE: Record<number, string> = {
   4: '/assets/player/player_yellow.png',
   5: '/assets/player/player_red.png',
 }
+
+const scheduledHourToDotIndex: Record<number, number> = { 1: 0, 7: 1, 13: 2, 19: 3 }
 
 const getSecondsUntil = (isoString: string) =>
   Math.max(0, Math.floor((new Date(isoString).getTime() - Date.now()) / 1000))
@@ -79,264 +82,366 @@ const formatTime = (seconds: number) => {
 export default function UploadPage() {
   const navigate = useNavigate()
   const { roomCode } = useParams<{ roomCode: string }>()
+  const myPlayerId = useRoomStore((s) => s.myPlayer?.playerId ?? 0)
 
-  // Zustand store에서 현재 플레이어 ID 가져오기
-  const myPlayerFromStore = useRoomStore((s) => s.myPlayer)
-  const myPlayerId = myPlayerFromStore?.playerId ?? 0
-
-  // ── 플레이어 목록 상태 (API) ──────────────────────────────
+  // ── 플레이어 목록 ─────────────────────────────────────────
   const [players, setPlayers] = useState<Player[]>([])
 
+  // ── 일일 업로드 상태: playerId → DailySlot[] (index 0~3) ──
+  const [dailyMap, setDailyMap] = useState<Record<number, DailySlot[]>>({})
+
+  // ── 파티 퀘스트 ───────────────────────────────────────────
+  const [partyQuest, setPartyQuest] = useState<ActivePartyQuest | null>(null)
+  const [partyTimeLeft, setPartyTimeLeft] = useState(0)
+
+  // ── UI 상태 ───────────────────────────────────────────────
+  const [homeHover, setHomeHover] = useState(false)
+  const [selectedDailyDot, setSelectedDailyDot] = useState(0)
+  const [selectedPartyDot, setSelectedPartyDot] = useState(0)
+  const [showDailyPopup, setShowDailyPopup] = useState(false)
+  const [showHelpPopup, setShowHelpPopup] = useState(false)
+  const [helpOkHovered, setHelpOkHovered] = useState(false)
+  const [showPartyInfoPopup, setShowPartyInfoPopup] = useState(false)
+  const [showUploadPopup, setShowUploadPopup] = useState(false)
+  const [uploadMode, setUploadMode] = useState<UploadMode>('daily')
+  const [selectedRoutineIndex, setSelectedRoutineIndex] = useState<number | null>(null)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ mode: 'daily' | 'party'; routineId?: number } | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [validationState, setValidationState] = useState<'idle' | 'checking' | 'approved' | 'rejected'>('idle')
+  const [rejectionReason, setRejectionReason] = useState<string>('')
+
+  // ── 성공 연출 ─────────────────────────────────────────────
+  const [showSuccess, setShowSuccess] = useState<'daily' | 'party' | null>(null)
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const triggerSuccess = (type: 'daily' | 'party') => {
+    setShowSuccess(type)
+    if (successTimerRef.current) clearTimeout(successTimerRef.current)
+    successTimerRef.current = setTimeout(() => setShowSuccess(null), 2800)
+  }
+
+  const partyQuestRef = useRef(partyQuest)
+  partyQuestRef.current = partyQuest
+
+  // ── 플레이어 목록 fetch ───────────────────────────────────
   useEffect(() => {
     if (!roomCode) return
     fetch(`${API_BASE}/rooms/${roomCode}/players-with-routines`)
-      .then(res => res.json())
+      .then(r => r.json())
       .then(json => {
         if (json.success && json.data?.players) {
-          const mapped: Player[] = json.data.players.map((p: {
-            playerId: number
-            slotNumber: number
-            nickname: string
-            skinImageUrl: string | null
+          setPlayers(json.data.players.map((p: {
+            playerId: number; slotNumber: number; nickname: string
+            skinImageUrl: string | null; characterType: string | null
             routines: { slotNumber: number; emoji: string; title: string }[]
           }) => ({
             id: p.playerId,
             nickname: p.nickname,
-            character: p.skinImageUrl ?? SLOT_DEFAULT_IMAGE[p.slotNumber] ?? '/assets/player/player_white.png',
-            colorClass: SLOT_COLOR_CLASS[p.slotNumber] ?? 'uploadscreen-white',
+            character: p.skinImageUrl ?? (p.characterType ? `/assets/player/player_${p.characterType}.png` : SLOT_DEFAULT_IMAGE[p.slotNumber]) ?? '/assets/player/player_white.png',
+            colorClass: (p.characterType ? CHARACTER_TYPE_COLOR_CLASS[p.characterType] : null) ?? SLOT_COLOR_CLASS[p.slotNumber] ?? 'uploadscreen-white',
             routines: p.routines.map(r => ({ emoji: r.emoji, content: r.title })),
-          }))
-          setPlayers(mapped)
+          })))
         }
       })
       .catch(err => console.error('플레이어 목록 조회 실패:', err))
   }, [roomCode])
 
-  const myPlayer = players.find((p) => p.id === myPlayerId) ?? players[0]
+  // ── 일일 업로드 현황 fetch ────────────────────────────────
+  const fetchDailyStatus = () => {
+    if (!roomCode) return
+    fetch(`${API_BASE}/rooms/${roomCode}/daily-uploads/today`)
+      .then(r => r.json())
+      .then(json => {
+        if (json.success && json.data?.players) {
+          const map: Record<number, DailySlot[]> = {}
+          for (const p of json.data.players) {
+            map[p.playerId] = p.uploads // [{ routineId, imageUrl, uploadedAt }]
+            console.log(`[DEBUG] player ${p.playerId} uploads:`, p.uploads)
+          }
+          setDailyMap(map)
+        }
+      })
+      .catch(err => console.error('일일 업로드 조회 실패:', err))
+  }
 
-  // ── 공통 UI 상태 ──────────────────────────────────────────
-  const [homeHover, setHomeHover] = useState(false)
+  // ── 파티 퀘스트 fetch ─────────────────────────────────────
+  const fetchPartyQuest = () => {
+    if (!roomCode) return
+    fetch(`${API_BASE}/rooms/${roomCode}/party-quests/active`)
+      .then(r => r.json())
+      .then(json => {
+        if (json.success && json.data) {
+          const q: ActivePartyQuest = json.data
+          const left = getSecondsUntil(q.expiresAt)
+          if (left > 0) {
+            setPartyQuest(q)
+            setPartyTimeLeft(left)
+            setSelectedPartyDot(scheduledHourToDotIndex[q.scheduledHour] ?? 0)
+          } else {
+            setPartyQuest(null)
+            setPartyTimeLeft(0)
+          }
+        } else {
+          setPartyQuest(null)
+          setPartyTimeLeft(0)
+        }
+      })
+      .catch(err => console.error('파티 퀘스트 조회 실패:', err))
+  }
 
-  // ── Daily 상태 ────────────────────────────────────────────
-  const [selectedDailyDot, setSelectedDailyDot] = useState(0)
-  const [dailyLogs, setDailyLogs] = useState<DailyLogEntry[]>(() =>
-    JSON.parse(localStorage.getItem('routineDailyLogs') ?? '[]')
-  )
-  const [showDailyPopup, setShowDailyPopup] = useState(false)
-  const [showHelpPopup, setShowHelpPopup] = useState(false)
-
-  // ── Party 상태 ────────────────────────────────────────────
-  const [activeQuestInfo] = useState<PartyQuestInfo | null>(() => {
-    const saved = localStorage.getItem(PARTY_QUEST_LS_KEY)
-    if (!saved) return null
-    const info: PartyQuestInfo = JSON.parse(saved)
-    if (getSecondsUntil(info.expiresAt) > 0) return info
-    return null
-  })
-
-  const [selectedPartyDot, setSelectedPartyDot] = useState<number>(
-    () => activeQuestInfo?.dotIndex ?? 0
-  )
-
-  const [partyLogs, setPartyLogs] = useState<PartyLogEntry[]>(() =>
-    JSON.parse(localStorage.getItem(PARTY_LOGS_LS_KEY) ?? '[]')
-  )
-
-  const [partyTimeLeft, setPartyTimeLeft] = useState<number>(() =>
-    activeQuestInfo ? getSecondsUntil(activeQuestInfo.expiresAt) : 0
-  )
-
-  const [showPartyInfoPopup, setShowPartyInfoPopup] = useState(false)
-
-  // ── 업로드 팝업 상태 ──────────────────────────────────────
-  const [showUploadPopup, setShowUploadPopup] = useState(false)
-  const [uploadMode, setUploadMode] = useState<UploadMode>('daily')
-  const [selectedRoutineIndex, setSelectedRoutineIndex] = useState<number | null>(null)
-  const [previewImage, setPreviewImage] = useState<string | null>(null)
-
-  // ── 삭제 팝업 상태 ────────────────────────────────────────
-  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
-  const [deleteMode, setDeleteMode] = useState<DeleteMode>('daily')
-
-  // ── Party time left 카운트다운 ─────────────────────────────
   useEffect(() => {
-    if (!activeQuestInfo) return
+    fetchDailyStatus()
+    fetchPartyQuest()
+  }, [roomCode])
+
+  // ── 파티 타이머 카운트다운 ────────────────────────────────
+  useEffect(() => {
     if (partyTimeLeft <= 0) return
-    const timer = window.setInterval(() =>
-      setPartyTimeLeft(prev => Math.max(0, prev - 1)), 1000
-    )
+    const timer = setInterval(() => setPartyTimeLeft(p => {
+      if (p <= 1) { setPartyQuest(null); return 0 }
+      return p - 1
+    }), 1000)
     return () => clearInterval(timer)
-  }, [activeQuestInfo, partyTimeLeft])
+  }, [partyTimeLeft])
 
-  // ── isPartyQuestTime (party 버튼 활성화 여부) ─────────────
-  const isPartyQuestActive = useMemo(() => {
-    if (!activeQuestInfo) return false
-    return partyTimeLeft > 0
-  }, [activeQuestInfo, partyTimeLeft])
+  // ── 소켓 연결 + 이벤트 리스너 ────────────────────────────
+  useEffect(() => {
+    if (!roomCode) return
+    const socket = getSocket()
+    joinRoom(roomCode)
 
-  // ── Daily 헬퍼 ────────────────────────────────────────────
-  const getDailyImage = (playerId: number, routineIndex: number) =>
-    dailyLogs.find((log) => log.memberId === playerId && log.routineIndex === routineIndex)
+    // 다른 플레이어가 일일 업로드 → 현황 재조회
+    socket.on('daily:upload-updated', fetchDailyStatus)
+    socket.on('daily:upload-deleted', fetchDailyStatus)
 
-  const allPlayersUploadedForRoutine = (routineIndex: number) =>
-    players.every((p) =>
-      dailyLogs.some((log) => log.memberId === p.id && log.routineIndex === routineIndex)
-    )
+    // 다른 플레이어가 파티 업로드 → 파티 퀘스트 재조회
+    socket.on('party-quest:upload-updated', fetchPartyQuest)
+    socket.on('party-quest:upload-deleted', fetchPartyQuest)
+
+    // 파티 퀘스트 완료 → 성공 연출 + 재조회
+    const handlePartyCompleted = () => {
+      triggerSuccess('party')
+      fetchPartyQuest()
+    }
+    socket.on('party-quest:completed', handlePartyCompleted)
+
+    return () => {
+      leaveRoom(roomCode)
+      socket.off('daily:upload-updated', fetchDailyStatus)
+      socket.off('daily:upload-deleted', fetchDailyStatus)
+      socket.off('party-quest:upload-updated', fetchPartyQuest)
+      socket.off('party-quest:upload-deleted', fetchPartyQuest)
+      socket.off('party-quest:completed', handlePartyCompleted)
+    }
+  }, [roomCode])
+
+  // ── 헬퍼 ─────────────────────────────────────────────────
+  const myPlayer = players.find(p => p.id === myPlayerId) ?? players[0]
+
+  const getDailySlot = (playerId: number, dotIndex: number): DailySlot | null => {
+    const slot = dailyMap[playerId]?.[dotIndex]
+    return slot?.imageUrl ? slot : null
+  }
+
+  const getRoutineId = (playerId: number, dotIndex: number): number | null =>
+    dailyMap[playerId]?.[dotIndex]?.routineId ?? null
+
+  const allDailyUploaded = (dotIndex: number) =>
+    players.length > 0 && players.every(p => !!dailyMap[p.id]?.[dotIndex]?.imageUrl)
 
   const getDotColor = (dotIndex: number) => {
-    if (allPlayersUploadedForRoutine(dotIndex)) return '#F287FB'
+    if (allDailyUploaded(dotIndex)) return '#F287FB'
     if (dotIndex === selectedDailyDot) return '#B39EFF'
     return '#ffffff'
   }
 
-  // ── Party 헬퍼 ────────────────────────────────────────────
-  const getPartyImage = (playerId: number, dotIndex: number) =>
-    partyLogs.find((log) => log.memberId === playerId && log.dotIndex === dotIndex)
+  const isPartyQuestActive = !!partyQuest && partyTimeLeft > 0 && partyQuest.status !== 'completed'
+  const activeDotIndex = partyQuest ? (scheduledHourToDotIndex[partyQuest.scheduledHour] ?? -1) : -1
 
-  const allPlayersUploadedForParty = (dotIndex: number) =>
-    players.every((p) =>
-      partyLogs.some((log) => log.memberId === p.id && log.dotIndex === dotIndex)
-    )
+  const getPartyUpload = (playerId: number): PartyUpload | null =>
+    partyQuest?.uploads.find(u => u.playerId === playerId) ?? null
+
+  const getPartyImage = (playerId: number): string | null =>
+    getPartyUpload(playerId)?.imageUrl ?? null
+
+  const allPartyUploaded = () =>
+    !!partyQuest && players.length > 0 &&
+    players.every(p => partyQuest.uploads.some(u => u.playerId === p.id))
 
   const getPartyDotColor = (dotIndex: number) => {
-    if (allPlayersUploadedForParty(dotIndex)) return '#F287FB'
+    if (dotIndex === activeDotIndex && (partyQuest?.status === 'completed' || allPartyUploaded())) return '#F287FB'
     if (dotIndex === selectedPartyDot) return '#B39EFF'
     return '#ffffff'
   }
 
-  // 해당 dot이 클릭 가능한 파티퀘스트 슬롯인지 (add.png 표시 조건)
-  const isPartySlotActive = (dotIndex: number) =>
-    isPartyQuestActive && activeQuestInfo?.dotIndex === dotIndex
+  const isPartySlotClickable = (dotIndex: number) =>
+    isPartyQuestActive && dotIndex === activeDotIndex
 
-  // ── Daily 핸들러 ──────────────────────────────────────────
-  const handleOpenDailyUploadPopup = () => {
-    if (getDailyImage(myPlayerId, selectedDailyDot)) return
-
+  // ── 핸들러: 일일 업로드 팝업 열기 ────────────────────────
+  const handleOpenDailyUpload = () => {
+    if (getDailySlot(myPlayerId, selectedDailyDot)) return
     setUploadMode('daily')
     setSelectedRoutineIndex(selectedDailyDot)
     setPreviewImage(null)
+    setSelectedFile(null)
+    setValidationState('idle')
     setShowUploadPopup(true)
   }
 
-  // ── Party 핸들러 ──────────────────────────────────────────
-  const handleOpenPartyUploadPopup = (playerId: number) => {
+  // ── 핸들러: 파티 업로드 팝업 열기 ────────────────────────
+  const handleOpenPartyUpload = (playerId: number) => {
     if (playerId !== myPlayerId) return
-    if (!isPartySlotActive(selectedPartyDot)) return
-    if (getPartyImage(myPlayerId, selectedPartyDot)) return
-
+    if (!isPartySlotClickable(selectedPartyDot)) return
+    if (getPartyImage(myPlayerId)) return
+    if (partyQuest?.status === 'completed') return
     setUploadMode('party')
     setPreviewImage(null)
+    setSelectedFile(null)
+    setValidationState('idle')
     setShowUploadPopup(true)
   }
 
-  // ── 공통 업로드 핸들러 ────────────────────────────────────
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
     if (!file) return
+    setSelectedFile(file)
+    setValidationState('idle')
+    setRejectionReason('')
     const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') setPreviewImage(reader.result)
-    }
+    reader.onload = () => { if (typeof reader.result === 'string') setPreviewImage(reader.result) }
     reader.readAsDataURL(file)
   }
 
-  const handleUpload = () => {
-    if (!previewImage) return
+  // ── 핸들러: 업로드 확정 ───────────────────────────────────
+  const handleUpload = async () => {
+    if (!previewImage || !selectedFile || isUploading) return
+    setIsUploading(true)
 
-    const now = new Date()
-    const uploadedAt = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    // 파티퀘스트는 AI 판별 중 상태 표시
+    if (uploadMode === 'party') setValidationState('checking')
 
-    if (uploadMode === 'daily') {
-      if (selectedRoutineIndex === null) {
-        alert('업로드할 루틴을 선택해주세요.')
-        return
+    try {
+      if (uploadMode === 'daily') {
+        const routineId = getRoutineId(myPlayerId, selectedRoutineIndex ?? selectedDailyDot)
+        if (!routineId) { alert('루틴 정보를 찾을 수 없습니다.'); return }
+
+        const formData = new FormData()
+        formData.append('image', selectedFile)
+        formData.append('playerId', String(myPlayerId))
+        formData.append('routineId', String(routineId))
+
+        // 업로드 전 현재 완료 수 (3이 되면 일일 퀘스트 완료)
+        const prevCount = (dailyMap[myPlayerId] ?? []).filter(s => s?.imageUrl !== null).length
+
+        const res = await fetch(`${API_BASE}/players/${myPlayerId}/daily-uploads`, {
+          method: 'POST',
+          body: formData,
+        })
+        const json = await res.json()
+        if (!json.success) { alert(json.error ?? '업로드 실패'); return }
+
+        if (prevCount === 2) triggerSuccess('daily')  // 3번째 업로드 → 일일 퀘스트 완료
+
+        fetchDailyStatus()
+        setShowUploadPopup(false)
+        setPreviewImage(null)
+        setSelectedFile(null)
+        setSelectedRoutineIndex(null)
+      } else {
+        if (!partyQuestRef.current) { alert('활성화된 파티 퀘스트가 없습니다.'); return }
+
+        const formData = new FormData()
+        formData.append('image', selectedFile)
+        formData.append('playerId', String(myPlayerId))
+
+        const res = await fetch(`${API_BASE}/party-quests/${partyQuestRef.current.partyQuestId}/upload`, {
+          method: 'POST',
+          body: formData,
+        })
+        const json = await res.json()
+
+        if (!json.success) {
+          // AI 판별 실패
+          setValidationState('rejected')
+          setRejectionReason(json.error ?? '퀘스트 조건에 맞지 않는 사진입니다.')
+          return
+        }
+
+        // AI 판별 성공
+        setValidationState('approved')
+        if (json.data?.status === 'completed') triggerSuccess('party')
+        fetchPartyQuest()
+        setTimeout(() => {
+          setShowUploadPopup(false)
+          setPreviewImage(null)
+          setSelectedFile(null)
+          setValidationState('idle')
+        }, 1500)
       }
-      if (getDailyImage(myPlayerId, selectedRoutineIndex)) {
-        alert('이미 업로드된 루틴입니다.')
-        return
-      }
-      const newLog: DailyLogEntry = {
-        memberId: myPlayerId,
-        routineIndex: selectedRoutineIndex,
-        imageUrl: previewImage,
-        uploadedAt,
-      }
-      const updatedLogs = [
-        ...dailyLogs.filter(
-          (log) => !(log.memberId === myPlayerId && log.routineIndex === selectedRoutineIndex)
-        ),
-        newLog,
-      ]
-      setDailyLogs(updatedLogs)
-      localStorage.setItem('routineDailyLogs', JSON.stringify(updatedLogs))
-    } else {
-      // party
-      const newLog: PartyLogEntry = {
-        memberId: myPlayerId,
-        dotIndex: selectedPartyDot,
-        imageUrl: previewImage,
-        uploadedAt,
-      }
-      const updatedLogs = [
-        ...partyLogs.filter(
-          (log) => !(log.memberId === myPlayerId && log.dotIndex === selectedPartyDot)
-        ),
-        newLog,
-      ]
-      setPartyLogs(updatedLogs)
-      localStorage.setItem(PARTY_LOGS_LS_KEY, JSON.stringify(updatedLogs))
+    } catch (err) {
+      console.error('업로드 에러:', err)
+      setValidationState('idle')
+      alert('업로드 중 오류가 발생했습니다.')
+    } finally {
+      setIsUploading(false)
     }
-
-    setShowUploadPopup(false)
   }
 
   const handleCloseUploadPopup = () => {
     setShowUploadPopup(false)
-    setSelectedRoutineIndex(null)
     setPreviewImage(null)
+    setSelectedRoutineIndex(null)
   }
 
-  // ── 삭제 핸들러 ───────────────────────────────────────────
+  // ── 핸들러: 삭제 팝업 열기 ───────────────────────────────
   const handleOpenDeletePopup = (
-    event: React.MouseEvent<HTMLButtonElement>,
+    e: React.MouseEvent<HTMLButtonElement>,
     playerId: number,
-    mode: DeleteMode,
+    mode: 'daily' | 'party'
   ) => {
-    event.stopPropagation()
+    e.stopPropagation()
     if (playerId !== myPlayerId) return
-
-    if (mode === 'daily' && !getDailyImage(playerId, selectedDailyDot)) return
-    if (mode === 'party') {
-      if (!getPartyImage(playerId, selectedPartyDot)) return
-      // 전원 완료 후 삭제 불가
-      if (allPlayersUploadedForParty(selectedPartyDot)) return
-    }
-
-    setDeleteMode(mode)
-    setDeleteTargetId(playerId)
-  }
-
-  const handleDeleteImage = () => {
-    if (deleteTargetId === null) return
-
-    if (deleteMode === 'daily') {
-      const updatedLogs = dailyLogs.filter(
-        (log) => !(log.memberId === deleteTargetId && log.routineIndex === selectedDailyDot)
-      )
-      setDailyLogs(updatedLogs)
-      localStorage.setItem('routineDailyLogs', JSON.stringify(updatedLogs))
+    if (mode === 'daily') {
+      const slot = getDailySlot(playerId, selectedDailyDot)
+      if (!slot) return
+      setDeleteTarget({ mode: 'daily', routineId: slot.routineId })
     } else {
-      const updatedLogs = partyLogs.filter(
-        (log) => !(log.memberId === deleteTargetId && log.dotIndex === selectedPartyDot)
-      )
-      setPartyLogs(updatedLogs)
-      localStorage.setItem(PARTY_LOGS_LS_KEY, JSON.stringify(updatedLogs))
+      if (!getPartyImage(playerId)) return
+      if (allPartyUploaded()) return
+      setDeleteTarget({ mode: 'party' })
     }
-
-    setDeleteTargetId(null)
   }
 
-  const handleCancelDelete = () => setDeleteTargetId(null)
+  // ── 핸들러: 삭제 확정 ────────────────────────────────────
+  const handleDeleteImage = async () => {
+    if (!deleteTarget) return
+
+    try {
+      if (deleteTarget.mode === 'daily' && deleteTarget.routineId) {
+        const res = await fetch(
+          `${API_BASE}/players/${myPlayerId}/daily-uploads/${deleteTarget.routineId}`,
+          { method: 'DELETE' }
+        )
+        const json = await res.json()
+        if (!json.success) { alert(json.error ?? '삭제 실패'); return }
+        fetchDailyStatus()
+      } else if (deleteTarget.mode === 'party' && partyQuestRef.current) {
+        const res = await fetch(
+          `${API_BASE}/party-quests/${partyQuestRef.current.partyQuestId}/uploads/${myPlayerId}`,
+          { method: 'DELETE' }
+        )
+        const json = await res.json()
+        if (!json.success) { alert(json.error ?? '삭제 실패'); return }
+        fetchPartyQuest()
+      }
+    } catch (err) {
+      console.error('삭제 에러:', err)
+    } finally {
+      setDeleteTarget(null)
+    }
+  }
 
   // ── 렌더 ──────────────────────────────────────────────────
   return (
@@ -349,60 +454,42 @@ export default function UploadPage() {
             <img className="uploadscreen-logo" src="/assets/logo/6.png" alt="RoutineMon" />
             <img className="uploadscreen-logo-sub" src="/assets/logo/low.png" alt="subtitle" />
           </div>
-
           <button className="uploadscreen-question-btn" onClick={() => setShowHelpPopup(true)}>
             <img src="/assets/button/question.png" alt="question" />
           </button>
-
           <button className="uploadscreen-back-btn" onClick={() => navigate(-1)}>
             <img src="/assets/button/previous.png" alt="back" />
           </button>
-
           <button
             className="uploadscreen-home-btn"
             onMouseEnter={() => setHomeHover(true)}
             onMouseLeave={() => setHomeHover(false)}
             onClick={() => navigate('/')}
           >
-            <img
-              src={homeHover ? '/assets/button/home2.png' : '/assets/button/home1.png'}
-              alt="home"
-            />
+            <img src={homeHover ? '/assets/button/home2.png' : '/assets/button/home1.png'} alt="home" />
           </button>
         </header>
 
         {/* 상단 버튼 */}
         <div className="uploadscreen-top-buttons">
-          <button
-            className="uploadscreen-create-btn"
-            onClick={() => navigate(`/room/${roomCode}/log-create`)}
-          >
+          <button className="uploadscreen-create-btn" onClick={() => navigate(`/room/${roomCode}/log-create`)}>
             <img src="/assets/button/createlog1.png" alt="create log" />
           </button>
-
           <button className="uploadscreen-daily-btn" onClick={() => setShowDailyPopup(true)}>
             <img src="/assets/button/daily.png" alt="daily" />
           </button>
-
           <button
-            className={`uploadscreen-party-btn ${
-              isPartyQuestActive ? 'uploadscreen-party-active' : 'uploadscreen-party-disabled'
-            }`}
+            className={`uploadscreen-party-btn ${isPartyQuestActive ? 'uploadscreen-party-active' : 'uploadscreen-party-disabled'}`}
             onClick={() => isPartyQuestActive && setShowPartyInfoPopup(true)}
             disabled={!isPartyQuestActive}
           >
-            <img
-              src={isPartyQuestActive ? '/assets/button/party_2.png' : '/assets/button/party_1.png'}
-              alt="party"
-            />
+            <img src={isPartyQuestActive ? '/assets/button/party_2.png' : '/assets/button/party_1.png'} alt="party" />
           </button>
         </div>
 
         {/* Dot 행 */}
         <div className="uploadscreen-dots-row">
           <span></span>
-
-          {/* Daily dots */}
           <div className="uploadscreen-dots">
             {[0, 1, 2, 3].map((i) => (
               <button
@@ -413,8 +500,6 @@ export default function UploadPage() {
               />
             ))}
           </div>
-
-          {/* Party dots */}
           <div className="uploadscreen-dots">
             {[0, 1, 2, 3].map((i) => (
               <button
@@ -430,122 +515,81 @@ export default function UploadPage() {
         {/* 플레이어 리스트 */}
         <section className="uploadscreen-player-list">
           {players.map((player) => {
-            const dailyUploaded = getDailyImage(player.id, selectedDailyDot)
-            const partyUploaded = getPartyImage(player.id, selectedPartyDot)
+            const dailySlot = getDailySlot(player.id, selectedDailyDot)
+            const partyImageUrl = getPartyImage(player.id)
             const isMyPlayer = player.id === myPlayerId
-            const partyAllDone = allPlayersUploadedForParty(selectedPartyDot)
+            const partyAllDone = allPartyUploaded()
+            const partySlotClickable = isPartySlotClickable(selectedPartyDot)
 
             return (
               <div className="uploadscreen-player-row" key={player.id}>
                 {/* 플레이어 정보 */}
                 <div className="uploadscreen-player-info">
-                  <img
-                    className="uploadscreen-player-img"
-                    src={player.character}
-                    alt={player.nickname}
-                  />
+                  <img className="uploadscreen-player-img" src={player.character} alt={player.nickname} />
                   <div className="uploadscreen-speech-wrap">
-                    <img
-                      className="uploadscreen-speech-img"
-                      src="/assets/frame/말풍선.png"
-                      alt="speech bubble"
-                    />
-                    <span>
-                      {dailyUploaded
-                        ? player.routines[selectedDailyDot]?.emoji ?? 'Zzz'
-                        : 'Zzz'}
-                    </span>
+                    <img className="uploadscreen-speech-img" src="/assets/frame/말풍선.png" alt="speech bubble" />
+                    <span>{dailySlot ? player.routines[selectedDailyDot]?.emoji ?? 'Zzz' : 'Zzz'}</span>
                   </div>
-                  <span className={`uploadscreen-player-name ${player.colorClass}`}>
-                    {player.nickname}
-                  </span>
+                  <span className={`uploadscreen-player-name ${player.colorClass}`}>{player.nickname}</span>
                 </div>
 
-                {/* Daily 슬롯 — 내 칸: button / 다른 플레이어: div */}
-                {isMyPlayer ? (
-                  <button
-                    className={`uploadscreen-upload-slot ${player.colorClass}`}
-                    onClick={handleOpenDailyUploadPopup}
-                  >
-                    {dailyUploaded ? (
-                      <>
-                        <img
-                          className="uploadscreen-uploaded-img"
-                          src={dailyUploaded.imageUrl}
-                          alt="uploaded"
-                        />
-                        <span className="uploadscreen-upload-time">{dailyUploaded.uploadedAt}</span>
-                        <button
-                          type="button"
-                          className="uploadscreen-star-btn"
-                          onClick={(e) => handleOpenDeletePopup(e, player.id, 'daily')}
-                        >
-                          <img src="/assets/button/star.png" alt="delete" />
-                        </button>
-                      </>
-                    ) : (
-                      <img
-                        className="uploadscreen-add-icon"
-                        src="/assets/button/add.png"
-                        alt="add"
-                      />
-                    )}
-                  </button>
-                ) : (
-                  <div className={`uploadscreen-upload-slot ${player.colorClass}`}>
-                    {dailyUploaded && (
-                      <>
-                        <img
-                          className="uploadscreen-uploaded-img"
-                          src={dailyUploaded.imageUrl}
-                          alt="uploaded"
-                        />
-                        <span className="uploadscreen-upload-time">{dailyUploaded.uploadedAt}</span>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Party 슬롯 */}
-                <button
-                  className={`uploadscreen-party-slot ${player.colorClass}`}
-                  onClick={() => handleOpenPartyUploadPopup(player.id)}
-                  style={{ cursor: isMyPlayer && isPartySlotActive(selectedPartyDot) && !partyUploaded ? 'pointer' : 'default' }}
+                {/* Daily 슬롯 */}
+                <div
+                  className={`uploadscreen-upload-slot ${player.colorClass}`}
+                  onClick={isMyPlayer ? handleOpenDailyUpload : undefined}
+                  style={{ cursor: isMyPlayer ? 'pointer' : 'default' }}
                 >
-                  {partyUploaded ? (
+                  {dailySlot ? (
                     <>
-                      <img
-                        className="uploadscreen-uploaded-img"
-                        src={partyUploaded.imageUrl}
-                        alt="uploaded"
-                      />
-                      <span className="uploadscreen-upload-time">{partyUploaded.uploadedAt}</span>
-                      {isMyPlayer && !partyAllDone && (
-                        <button
-                          type="button"
-                          className="uploadscreen-star-btn"
-                          onClick={(e) => handleOpenDeletePopup(e, player.id, 'party')}
-                        >
+                      <img className="uploadscreen-uploaded-img" src={toAbsoluteUrl(dailySlot.imageUrl)!} alt="uploaded" />
+                      {dailySlot.uploadTime && (
+                        <span className="uploadscreen-upload-time">{dailySlot.uploadTime}</span>
+                      )}
+                      {isMyPlayer && (
+                        <button type="button" className="uploadscreen-star-btn"
+                          onClick={(e) => handleOpenDeletePopup(e, player.id, 'daily')}>
                           <img src="/assets/button/star.png" alt="delete" />
                         </button>
                       )}
                     </>
                   ) : (
-                    isMyPlayer && isPartySlotActive(selectedPartyDot) && (
-                      <img
-                        className="uploadscreen-add-icon"
-                        src="/assets/button/add.png"
-                        alt="add"
-                      />
-                    )
+                    isMyPlayer && <img className="uploadscreen-add-icon" src="/assets/button/add.png" alt="add" />
                   )}
-                </button>
+                </div>
+
+                {/* Party 슬롯 */}
+                <div
+                  className={`uploadscreen-party-slot ${player.colorClass}`}
+                  onClick={() => handleOpenPartyUpload(player.id)}
+                  style={{ cursor: isMyPlayer && partySlotClickable && !partyImageUrl ? 'pointer' : 'default' }}
+                >
+                  {selectedPartyDot === activeDotIndex ? (
+                    partyImageUrl ? (
+                      <>
+                        <img className="uploadscreen-uploaded-img" src={toAbsoluteUrl(partyImageUrl)!} alt="uploaded" />
+                        {getPartyUpload(player.id)?.uploadTime && (
+                          <span className="uploadscreen-upload-time">{getPartyUpload(player.id)!.uploadTime}</span>
+                        )}
+                        {isMyPlayer && !partyAllDone && (
+                          <button type="button" className="uploadscreen-star-btn"
+                            onClick={(e) => handleOpenDeletePopup(e, player.id, 'party')}>
+                            <img src="/assets/button/star.png" alt="delete" />
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      isMyPlayer && partySlotClickable && partyQuest?.status !== 'completed' && (
+                        <img className="uploadscreen-add-icon" src="/assets/button/add.png" alt="add" />
+                      )
+                    )
+                  ) : null}
+                </div>
               </div>
             )
           })}
         </section>
 
-        {/* ── DAILY 팝업 ───────────────────────────────────── */}
+        {/* ── DAILY 팝업 ─────────────────────────────────────── */}
         {showDailyPopup && (
           <div className="uploadscreen-popup-backdrop" onClick={() => setShowDailyPopup(false)}>
             <div className="uploadscreen-daily-popup" onClick={(e) => e.stopPropagation()}>
@@ -553,15 +597,10 @@ export default function UploadPage() {
               <div className="uploadscreen-daily-list">
                 {players.map((player) => (
                   <div className="uploadscreen-daily-row" key={player.id}>
-                    <span className={`uploadscreen-daily-name ${player.colorClass}`}>
-                      {player.nickname}
-                    </span>
+                    <span className={`uploadscreen-daily-name ${player.colorClass}`}>{player.nickname}</span>
                     <div className="uploadscreen-daily-routines">
                       {player.routines.map((routine, index) => (
-                        <div
-                          className="uploadscreen-daily-routine-item"
-                          key={`${player.id}-${index}`}
-                        >
+                        <div className="uploadscreen-daily-routine-item" key={index}>
                           <span className="uploadscreen-daily-emoji">{routine.emoji}</span>
                           <span>{index + 1}. {routine.content}</span>
                         </div>
@@ -570,57 +609,76 @@ export default function UploadPage() {
                   </div>
                 ))}
               </div>
-              <button
-                className="uploadscreen-popup-yes-btn"
-                onClick={() => setShowDailyPopup(false)}
-              >
+              <button className="uploadscreen-popup-yes-btn" onClick={() => setShowDailyPopup(false)}>
                 <img src="/assets/button/yes.png" alt="yes" />
               </button>
             </div>
           </div>
         )}
 
-        {/* ── PARTY INFO 팝업 ──────────────────────────────── */}
-        {showPartyInfoPopup && activeQuestInfo && (
-          <div
-            className="uploadscreen-popup-backdrop"
-            onClick={() => setShowPartyInfoPopup(false)}
-          >
+        {/* ── PARTY INFO 팝업 ────────────────────────────────── */}
+        {showPartyInfoPopup && partyQuest && (
+          <div className="uploadscreen-popup-backdrop" onClick={() => setShowPartyInfoPopup(false)}>
             <div className="uploadscreen-party-info-popup" onClick={(e) => e.stopPropagation()}>
               <h2>Party Quest</h2>
-              <p className="uploadscreen-party-quest-text">{activeQuestInfo.content}</p>
+              <p className="uploadscreen-party-quest-text">{partyQuest.content}</p>
               <div className={`uploadscreen-party-timelimit${partyTimeLeft <= 600 ? ' time-critical' : partyTimeLeft <= 1800 ? ' time-warn' : ''}`}>
                 time limit {formatTime(partyTimeLeft)}
               </div>
-              <button
-                className="uploadscreen-popup-yes-btn"
-                onClick={() => setShowPartyInfoPopup(false)}
-              >
+              <button className="uploadscreen-popup-yes-btn" onClick={() => setShowPartyInfoPopup(false)}>
                 <img src="/assets/button/yes.png" alt="yes" />
               </button>
             </div>
           </div>
         )}
 
-        {/* ── 업로드 팝업 ──────────────────────────────────── */}
+        {/* ── 업로드 팝업 ────────────────────────────────────── */}
         {showUploadPopup && (
           <div className="uploadscreen-popup-backdrop">
             <div className="uploadscreen-upload-popup">
-              <h2>
-                {uploadMode === 'party' ? '파티 퀘스트 사진 업로드' : '사진을 업로드 하시겠습니까?'}
-              </h2>
+              <h2>{uploadMode === 'party' ? '파티 퀘스트 사진 업로드' : '사진을 업로드 하시겠습니까?'}</h2>
 
-              {/* Daily: 루틴 선택 */}
-              {uploadMode === 'daily' && (
+              {/* AI 판별 상태 오버레이 (파티퀘스트 전용) */}
+              {uploadMode === 'party' && validationState === 'checking' && (
+                <div className="uploadscreen-validation-overlay">
+                  <div className="uploadscreen-validation-checking">
+                    <span className="uploadscreen-validation-spinner">🤖</span>
+                    <p>AI가 사진을 판별 중입니다...</p>
+                  </div>
+                </div>
+              )}
+              {uploadMode === 'party' && validationState === 'approved' && (
+                <div className="uploadscreen-validation-overlay">
+                  <div className="uploadscreen-validation-approved">
+                    <span>✅</span>
+                    <p>인증 성공!</p>
+                  </div>
+                </div>
+              )}
+              {uploadMode === 'party' && validationState === 'rejected' && (
+                <div className="uploadscreen-validation-overlay">
+                  <div className="uploadscreen-validation-rejected">
+                    <span>❌</span>
+                    <p>{rejectionReason}</p>
+                    <button className="uploadscreen-retry-btn" onClick={() => {
+                      setValidationState('idle')
+                      setPreviewImage(null)
+                      setSelectedFile(null)
+                    }}>다른 사진 선택</button>
+                  </div>
+                </div>
+              )}
+
+              {uploadMode === 'daily' && myPlayer && (
                 <div className="uploadscreen-routine-select-list">
                   {myPlayer.routines.map((routine, index) => {
-                    const alreadyUploaded = !!getDailyImage(myPlayerId, index)
+                    const alreadyUploaded = !!getDailySlot(myPlayerId, index)
                     return (
                       <button
                         key={index}
-                        className={`uploadscreen-routine-select-btn ${
-                          selectedRoutineIndex === index ? 'uploadscreen-routine-selected' : ''
-                        } ${alreadyUploaded ? 'uploadscreen-routine-done' : ''}`}
+                        className={`uploadscreen-routine-select-btn
+                          ${selectedRoutineIndex === index ? 'uploadscreen-routine-selected' : ''}
+                          ${alreadyUploaded ? 'uploadscreen-routine-done' : ''}`}
                         onClick={() => !alreadyUploaded && setSelectedRoutineIndex(index)}
                         disabled={alreadyUploaded}
                       >
@@ -632,11 +690,8 @@ export default function UploadPage() {
                 </div>
               )}
 
-              {/* Party: 퀘스트 내용 표시 */}
-              {uploadMode === 'party' && activeQuestInfo && (
-                <p className="uploadscreen-party-quest-hint">
-                  {activeQuestInfo.content}
-                </p>
+              {uploadMode === 'party' && partyQuest && (
+                <p className="uploadscreen-party-quest-hint">{partyQuest.content}</p>
               )}
 
               <label className="uploadscreen-file-label">
@@ -645,14 +700,12 @@ export default function UploadPage() {
               </label>
 
               <div className="uploadscreen-preview-box">
-                {previewImage
-                  ? <img src={previewImage} alt="preview" />
-                  : <span>선택된 파일 없음</span>
-                }
+                {previewImage ? <img src={previewImage} alt="preview" /> : <span>선택된 파일 없음</span>}
               </div>
 
               <div className="uploadscreen-popup-actions">
-                <button onClick={handleUpload} disabled={!previewImage} className={!previewImage ? 'uploadscreen-btn-disabled' : ''}>
+                <button onClick={handleUpload} disabled={!previewImage || isUploading}
+                  className={!previewImage || isUploading ? 'uploadscreen-btn-disabled' : ''}>
                   <img src="/assets/button/yes.png" alt="yes" />
                 </button>
                 <button onClick={handleCloseUploadPopup}>
@@ -663,7 +716,7 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* ── 도움말 팝업 ──────────────────────────────────── */}
+        {/* ── 도움말 팝업 ────────────────────────────────────── */}
         {showHelpPopup && (
           <div className="uploadscreen-popup-backdrop" onClick={() => setShowHelpPopup(false)}>
             <div className="uploadscreen-help-popup" onClick={(e) => e.stopPropagation()}>
@@ -730,28 +783,40 @@ export default function UploadPage() {
               </div>
 
               <button
-                className="uploadscreen-popup-yes-btn"
-                style={{ marginTop: '20px' }}
+                className="uploadscreen-help-ok-btn"
                 onClick={() => setShowHelpPopup(false)}
+                onMouseEnter={() => setHelpOkHovered(true)}
+                onMouseLeave={() => setHelpOkHovered(false)}
               >
-                <img src="/assets/button/yes.png" alt="yes" />
+                <img src={helpOkHovered ? '/assets/button/ok2.png' : '/assets/button/ok1.png'} alt="OK" />
               </button>
             </div>
           </div>
         )}
 
-        {/* ── 삭제 팝업 ────────────────────────────────────── */}
-        {deleteTargetId !== null && (
+        {/* ── 성공 연출 오버레이 ─────────────────────────────── */}
+        {showSuccess && (
+          <div className="uploadscreen-success-overlay">
+            {/* 파티클 별 8개 */}
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className={`uploadscreen-sparkle uploadscreen-sparkle-${i}`} />
+            ))}
+            <img
+              className="uploadscreen-success-img"
+              src="/assets/letter/success.png"
+              alt="success"
+            />
+          </div>
+        )}
+
+        {/* ── 삭제 팝업 ──────────────────────────────────────── */}
+        {deleteTarget !== null && (
           <div className="uploadscreen-popup-backdrop">
             <div className="uploadscreen-delete-popup">
               <h2>사진을 삭제 하시겠습니까?</h2>
               <div className="uploadscreen-popup-actions">
-                <button onClick={handleDeleteImage}>
-                  <img src="/assets/button/yes.png" alt="yes" />
-                </button>
-                <button onClick={handleCancelDelete}>
-                  <img src="/assets/button/no.png" alt="no" />
-                </button>
+                <button onClick={handleDeleteImage}><img src="/assets/button/yes.png" alt="yes" /></button>
+                <button onClick={() => setDeleteTarget(null)}><img src="/assets/button/no.png" alt="no" /></button>
               </div>
             </div>
           </div>

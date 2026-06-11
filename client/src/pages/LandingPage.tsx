@@ -6,7 +6,7 @@ import './LandingPage.css'
 
 export default function LandingPage() {
   const navigate = useNavigate()
-  const { setRoom, setPendingMaxPlayers } = useRoomStore()
+  const { setRoom, setPendingMaxPlayers, reset } = useRoomStore()
 
   const [selectedPlayers, setSelectedPlayers] = useState<number | null>(null)
   const [roomCode, setRoomCode] = useState('')
@@ -20,6 +20,7 @@ export default function LandingPage() {
   // 방 신설: maxPlayers 저장 후 슬롯 선택 페이지로 이동 (API 호출 없음)
   const handleCreateRoom = () => {
     if (!selectedPlayers) return
+    reset()                          // 이전 방/플레이어 정보 초기화
     setPendingMaxPlayers(selectedPlayers)
     navigate('/create/select')
   }

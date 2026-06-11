@@ -123,6 +123,10 @@
   margin-top: 8px;
   padding: 20px 34px 20px;
   box-sizing: border-box;
+  border: 2px solid rgba(160, 130, 255, 0.45);
+  box-shadow:
+    0 0 24px rgba(120, 80, 255, 0.3),
+    inset 0 0 40px rgba(80, 40, 180, 0.1);
 }
 
 /* 캐릭터 영역 */
@@ -145,10 +149,25 @@
 
 .customscreen-nickname-row {
   margin-top: 5px;
-  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 22px;
+}
+
+/* 왼쪽 spacer — 오른쪽 컨트롤(✓/✗ + 버튼)과 너비를 맞춰 input을 진짜 가운데로 */
+.customscreen-nickname-spacer {
+  width: 52px;
+  flex-shrink: 0;
+}
+
+/* 오른쪽: ✓/✗ + 완료/수정 버튼 */
+.customscreen-nickname-controls {
+  width: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .customscreen-nickname {
@@ -178,8 +197,32 @@
   background: transparent;
   color: #efff00;
   font-family: 'GalmuriMono9', monospace;
-  position: absolute;
-  right: -35px;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.customscreen-edit-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* 닉네임 ✓/✗ 인라인 표시 */
+.customscreen-nickname-status {
+  font-size: 13px;
+  font-family: 'GalmuriMono9', monospace;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.customscreen-nickname-status.valid {
+  color: #18fff4;
+}
+
+.customscreen-nickname-status.invalid {
+  color: #FF6B6B;
 }
 
 .customscreen-routine-edit {
@@ -352,44 +395,36 @@
 
 .customscreen-routine-icon-wrap {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
 }
 
-.customscreen-routine-icon {
+/* 이모지 없을 때: + 버튼 */
+.customscreen-emoji-trigger {
   width: 34px;
   height: 34px;
-  position: relative;
   display: flex;
-  justify-content: center;
   align-items: center;
-  border: none;
+  justify-content: center;
+  border: 1.5px dashed #8f6cff;
+  border-radius: 6px;
   background: transparent;
-  padding: 0;
+  color: #8f6cff;
+  font-size: 16px;
   cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.customscreen-routine-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  image-rendering: pixelated;
+.customscreen-emoji-trigger:hover {
+  border-color: #c084fc;
+  background: rgba(192, 132, 252, 0.12);
 }
 
-.customscreen-routine-icon span {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -53%);
-  color: #c986ff;
-  font-size: 18px;
-  font-weight: bold;
-  line-height: 1;
-  pointer-events: none;
-}
-
-.customscreen-routine-icon span:not(:empty) {
-  font-family: 'GalmuriMono9', monospace;
+/* 이모지 있을 때: 이모지만 크게 */
+.customscreen-emoji-trigger.has-emoji {
+  border: none;
+  font-size: 24px;
+  background: transparent;
 }
 
 .customscreen-emoji-popup {
@@ -427,7 +462,202 @@
   transform: translateY(-1px);
 }
 
-.customscreen-emoji-btn:hover {
-  background: rgba(255, 255, 255, 0.28);
-  transform: translateY(-1px);
+.customscreen-emoji-selected {
+  background: rgba(140, 100, 255, 0.45) !important;
+  border-color: #c084fc !important;
+}
+
+/* 컬러 안내 문구 */
+.customscreen-color-note {
+  margin: 6px 0 0;
+  font-size: 10px;
+  color: #8888aa;
+}
+
+/* 컬러 버튼 비활성화 */
+.customscreen-color-btn:disabled {
+  cursor: default;
+  opacity: 0.9;
+}
+
+/* 루틴 섹션 타이틀 + 진행도 */
+.customscreen-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.customscreen-routine-progress {
+  font-size: 12px;
+  color: #18fff4;
+}
+
+/* 루틴 행 — 메타(번호+뱃지) + 이모지 + 입력 + 버튼 */
+.customscreen-routine-row {
+  display: grid;
+  grid-template-columns: 52px 36px 1fr 42px;
+  align-items: center;
+  column-gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: border-color 0.15s;
+}
+
+.customscreen-routine-row-active {
+  border-bottom-color: rgba(24, 255, 244, 0.35);
+}
+
+.customscreen-routine-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.customscreen-routine-badge {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.badge-required {
+  background: rgba(192, 132, 252, 0.25);
+  color: #c084fc;
+}
+
+.badge-optional {
+  background: rgba(255,255,255,0.1);
+  color: #888;
+}
+
+/* 루틴 입력 래퍼 */
+.customscreen-routine-input-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.customscreen-char-count {
+  position: absolute;
+  right: 2px;
+  bottom: -14px;
+  font-size: 9px;
+}
+
+/* PIN 팝업 */
+.customscreen-pin-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.customscreen-pin-popup {
+  background: rgba(10, 8, 35, 0.97);
+  border: 2px solid #8f6cff;
+  padding: 28px 28px 22px;
+  width: 280px;
+  box-sizing: border-box;
+  text-align: center;
+  font-family: 'GalmuriMono9', monospace;
+}
+
+.customscreen-pin-title {
+  color: #ffffff;
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+
+.customscreen-pin-desc {
+  color: #aaa;
+  font-size: 11px;
+  margin: 0 0 16px;
+  line-height: 1.6;
+}
+
+.customscreen-pin-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid #8f6cff;
+  color: #ffffff;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 18px;
+  text-align: center;
+  letter-spacing: 6px;
+  padding: 10px;
+  outline: none;
+}
+
+.customscreen-pin-error {
+  color: #ff6b6b;
+  font-size: 11px;
+  margin: 8px 0 0;
+}
+
+.customscreen-pin-btns {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.customscreen-pin-cancel,
+.customscreen-pin-confirm {
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 13px;
+  padding: 8px 20px;
+  border: none;
+  cursor: pointer;
+}
+
+.customscreen-pin-cancel {
+  background: rgba(255,255,255,0.1);
+  color: #ccc;
+}
+
+.customscreen-pin-confirm {
+  background: #6c3fff;
+  color: #ffffff;
+}
+
+.customscreen-pin-confirm:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.customscreen-save-disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* 저장 실패 에러 메시지 */
+.customscreen-save-error {
+  text-align: center;
+  color: #FF6B6B;
+  font-size: 11px;
+  font-family: 'GalmuriMono9', monospace;
+  margin: 8px 0 0;
+}
+
+/* 닉네임 글자수 / 유효성 안내 */
+.customscreen-nickname-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  min-height: 14px;
+}
+
+.customscreen-nickname-count {
+  font-size: 10px;
+  font-family: 'GalmuriMono9', monospace;
+}
+
+.customscreen-nickname-error {
+  font-size: 10px;
+  color: #FF6B6B;
+  font-family: 'GalmuriMono9', monospace;
 }

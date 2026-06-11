@@ -161,6 +161,10 @@ body {
   cursor: pointer;
 }
 
+.uploadscreen-party-btn:disabled {
+  cursor: default;
+}
+
 .uploadscreen-create-btn {
   width: 128px;
   height: 45px;
@@ -250,14 +254,25 @@ body {
   position: absolute;
   left: -20px;
   top: -10px;
+  animation: upload-player-idle 3.5s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes upload-player-idle {
+  0%   { transform: translateY(0)    rotate(-1deg); }
+  30%  { transform: translateY(-5px) rotate(0deg);  }
+  60%  { transform: translateY(-7px) rotate(1deg);  }
+  100% { transform: translateY(0)    rotate(-1deg); }
 }
 
 .uploadscreen-player-name {
   position: absolute;
-  left: 25px;
-  top: 85px;
-  font-size: 14px;
+  left:30%;
+  transform: translateX(-50%);
+  top: 92px;
+  font-size: 13px;
   text-align: center;
+  white-space: nowrap;
 }
 
 .uploadscreen-speech-wrap {
@@ -356,6 +371,7 @@ button.uploadscreen-upload-slot {
   top: 36px;
   left: 0;
   right: 0;
+  z-index: 10;
   color: #ffffff;
   text-shadow:
     1px 1px 0 #4d27ff,
@@ -364,6 +380,7 @@ button.uploadscreen-upload-slot {
     -1px -1px 0 #4d27ff;
   font-size: 16px;
   text-align: center;
+  pointer-events: none;
 }
 
 .uploadscreen-star {
@@ -421,6 +438,72 @@ button.uploadscreen-upload-slot {
   box-sizing: border-box;
   color: #180e2b;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* AI 판별 오버레이 */
+.uploadscreen-validation-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(24, 14, 43, 0.92);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.uploadscreen-validation-checking,
+.uploadscreen-validation-approved,
+.uploadscreen-validation-rejected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #ffffff;
+  font-family: 'GalmuriMono9', monospace;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.uploadscreen-validation-checking span,
+.uploadscreen-validation-approved span,
+.uploadscreen-validation-rejected span {
+  font-size: 40px;
+}
+
+.uploadscreen-validation-checking p,
+.uploadscreen-validation-approved p,
+.uploadscreen-validation-rejected p {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.uploadscreen-validation-approved p { color: #7dffb3; }
+.uploadscreen-validation-rejected p { color: #ff8080; }
+
+.uploadscreen-validation-spinner {
+  animation: spin-wobble 1s infinite;
+  display: inline-block;
+}
+
+@keyframes spin-wobble {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(-15deg); }
+  75%  { transform: rotate(15deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.uploadscreen-retry-btn {
+  margin-top: 8px;
+  background: #7654d9;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 13px;
+  cursor: pointer;
 }
 
 .uploadscreen-daily-popup h2 {
@@ -767,10 +850,83 @@ button.uploadscreen-upload-slot {
   color: #e0d4ff;
 }
 
+/* ── 퀘스트 완료 성공 오버레이 ──────────────────────────────────── */
+.uploadscreen-success-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.uploadscreen-success-img {
+  width: 260px;
+  image-rendering: pixelated;
+  animation:
+    success-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    success-fadeout 0.6s ease-in 2.2s forwards;
+}
+
+.uploadscreen-sparkle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: sparkle-burst 0.8s ease-out 0.1s forwards;
+  opacity: 0;
+}
+
+.uploadscreen-sparkle-0 { background: #FFD700; --dx: 0px;    --dy: -90px; }
+.uploadscreen-sparkle-1 { background: #FF6B6B; --dx: 64px;   --dy: -64px; }
+.uploadscreen-sparkle-2 { background: #18fff4; --dx: 90px;   --dy: 0px;   }
+.uploadscreen-sparkle-3 { background: #FF6B6B; --dx: 64px;   --dy: 64px;  }
+.uploadscreen-sparkle-4 { background: #FFD700; --dx: 0px;    --dy: 90px;  }
+.uploadscreen-sparkle-5 { background: #c084fc; --dx: -64px;  --dy: 64px;  }
+.uploadscreen-sparkle-6 { background: #18fff4; --dx: -90px;  --dy: 0px;   }
+.uploadscreen-sparkle-7 { background: #c084fc; --dx: -64px;  --dy: -64px; }
+
+@keyframes success-pop {
+  0%   { transform: scale(0) rotate(-8deg); opacity: 0; }
+  60%  { transform: scale(1.25) rotate(4deg); opacity: 1; }
+  80%  { transform: scale(0.92) rotate(-2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes success-fadeout {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+@keyframes sparkle-burst {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  80%  { opacity: 0.8; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+}
+
 .uploadscreen-help-dot {
   display: inline-block;
   width: 12px;
   height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.uploadscreen-help-ok-btn {
+  display: block;
+  margin: 20px auto 0;
+  width: 78px;
+  height: 39px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.uploadscreen-help-ok-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
 }
