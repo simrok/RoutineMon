@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { Player, Room } from '../types'
 
 // 슬롯별 디폴트 색상 (1=흰색, 2=초록, 3=파랑, 4=노랑, 5=빨강)
@@ -43,27 +44,9 @@ interface RoomStore {
   reset: () => void
 }
 
-export const useRoomStore = create<RoomStore>((set) => ({
-  room: null,
-  myPlayer: null,
-  myPin: null,
-  players: [],
-  playerColors: { ...DEFAULT_PLAYER_COLORS },
-  pendingMaxPlayers: 5,
-  pendingPlayer: null,
-
-  setRoom: (room) => set({ room }),
-  setMyPlayer: (player) => set({ myPlayer: player }),
-  setMyPin: (pin) => set({ myPin: pin }),
-  setPlayers: (players) => set({ players }),
-  setPlayerColor: (slot, color) =>
-    set((state) => ({
-      playerColors: { ...state.playerColors, [slot]: color },
-    })),
-  setPendingMaxPlayers: (n) => set({ pendingMaxPlayers: n }),
-  setPendingPlayer: (p) => set({ pendingPlayer: p }),
-  reset: () =>
-    set({
+export const useRoomStore = create<RoomStore>()(
+  persist(
+    (set) => ({
       room: null,
       myPlayer: null,
       myPin: null,
@@ -71,5 +54,37 @@ export const useRoomStore = create<RoomStore>((set) => ({
       playerColors: { ...DEFAULT_PLAYER_COLORS },
       pendingMaxPlayers: 5,
       pendingPlayer: null,
+
+      setRoom: (room) => set({ room }),
+      setMyPlayer: (player) => set({ myPlayer: player }),
+      setMyPin: (pin) => set({ myPin: pin }),
+      setPlayers: (players) => set({ players }),
+      setPlayerColor: (slot, color) =>
+        set((state) => ({
+          playerColors: { ...state.playerColors, [slot]: color },
+        })),
+      setPendingMaxPlayers: (n) => set({ pendingMaxPlayers: n }),
+      setPendingPlayer: (p) => set({ pendingPlayer: p }),
+      reset: () =>
+        set({
+          room: null,
+          myPlayer: null,
+          myPin: null,
+          players: [],
+          playerColors: { ...DEFAULT_PLAYER_COLORS },
+          pendingMaxPlayers: 5,
+          pendingPlayer: null,
+        }),
     }),
-}))
+    {
+      name: 'routinemon-store', // localStorage 키 이름
+      partialize: (state) => ({
+        // pendingPlayer, pendingMaxPlayers는 저장 제외 (신설 흐름 중간값)
+        room: state.room,
+        myPlayer: state.myPlayer,
+        myPin: state.myPin,
+        playerColors: state.playerColors,
+      }),
+    }
+  )
+)

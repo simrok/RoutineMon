@@ -432,9 +432,9 @@ button.uploadscreen-upload-slot {
 }
 
 .uploadscreen-upload-popup {
-  width: 350px;
+  width: 300px;
   background: rgba(168, 245, 188, 0.96);
-  padding: 20px 20px;
+  padding: 14px 16px;
   box-sizing: border-box;
   color: #180e2b;
   text-align: center;
@@ -466,11 +466,6 @@ button.uploadscreen-upload-slot {
   padding: 0 24px;
 }
 
-.uploadscreen-validation-checking span,
-.uploadscreen-validation-approved span,
-.uploadscreen-validation-rejected span {
-  font-size: 40px;
-}
 
 .uploadscreen-validation-checking p,
 .uploadscreen-validation-approved p,
@@ -483,16 +478,35 @@ button.uploadscreen-upload-slot {
 .uploadscreen-validation-approved p { color: #7dffb3; }
 .uploadscreen-validation-rejected p { color: #ff8080; }
 
-.uploadscreen-validation-spinner {
-  animation: spin-wobble 1s infinite;
-  display: inline-block;
+/* 픽셀 도트 스피너 */
+.uploadscreen-pixel-spinner {
+  position: relative;
+  width: 60px;
+  height: 60px;
 }
 
-@keyframes spin-wobble {
-  0%   { transform: rotate(0deg); }
-  25%  { transform: rotate(-15deg); }
-  75%  { transform: rotate(15deg); }
-  100% { transform: rotate(0deg); }
+.uploadscreen-pixel-spinner-dot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: #F287FB;
+  top: 50%;
+  left: 50%;
+  animation: pixel-dot-fade 0.9s infinite ease-in-out;
+}
+
+.uploadscreen-pixel-spinner-dot:nth-child(1) { transform: translate(-50%, -50%) rotate(  0deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(2) { transform: translate(-50%, -50%) rotate( 45deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(3) { transform: translate(-50%, -50%) rotate( 90deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(4) { transform: translate(-50%, -50%) rotate(135deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(5) { transform: translate(-50%, -50%) rotate(180deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(6) { transform: translate(-50%, -50%) rotate(225deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(7) { transform: translate(-50%, -50%) rotate(270deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(8) { transform: translate(-50%, -50%) rotate(315deg) translateY(-24px); }
+
+@keyframes pixel-dot-fade {
+  0%, 100% { opacity: 0.12; }
+  50%       { opacity: 1; box-shadow: 0 0 6px #F287FB; }
 }
 
 .uploadscreen-retry-btn {

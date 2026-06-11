@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getRoom } from '../api/rooms'
 import { useRoomStore } from '../store/useRoomStore'
+import { useBgm } from '../context/BgmContext'
 import './LandingPage.css'
 
 export default function LandingPage() {
   const navigate = useNavigate()
   const { setRoom, setPendingMaxPlayers, reset } = useRoomStore()
 
+  const { muted, setMuted } = useBgm()
   const [selectedPlayers, setSelectedPlayers] = useState<number | null>(null)
   const [roomCode, setRoomCode] = useState('')
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
@@ -43,6 +45,11 @@ export default function LandingPage() {
 
   return (
     <div className="landing-container">
+
+      {/* 스피커 버튼 */}
+      <button className="speaker-btn" onClick={() => setMuted(!muted)}>
+        <img src={muted ? '/assets/button/speaker2.png' : '/assets/button/speaker1.png'} alt="speaker" />
+      </button>
 
       {/* 홈 버튼 */}
       <button

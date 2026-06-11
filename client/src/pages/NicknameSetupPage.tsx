@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
 import ConfirmPopup from '../components/ConfirmPopup'
 import { createRoom } from '../api/rooms'
+import { useBgm } from '../context/BgmContext'
 import './NicknameSetupPage.css'
 
 const MAX_NICKNAME_LENGTH = 7
@@ -30,6 +31,7 @@ export default function NicknameSetupPage() {
   const isCreating = !roomCode
 
   const { setRoom, setPendingPlayer, pendingMaxPlayers } = useRoomStore()
+  const { muted, setMuted } = useBgm()
 
   const [homeHover, setHomeHover] = useState(false)
   const [startHover, setStartHover] = useState(false)
@@ -140,6 +142,11 @@ export default function NicknameSetupPage() {
       {/* 이전 버튼 */}
       <button className="back-btn" onClick={() => navigate(-1)}>
         <img src="/assets/button/previous.png" alt="back" />
+      </button>
+
+      {/* 스피커 버튼 */}
+      <button className="speaker-btn" onClick={() => setMuted(!muted)}>
+        <img src={muted ? '/assets/button/speaker2.png' : '/assets/button/speaker1.png'} alt="speaker" />
       </button>
 
       {/* 홈 버튼 */}

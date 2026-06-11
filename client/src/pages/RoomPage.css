@@ -744,7 +744,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 340px;
+  width: 380px;
+  background: rgba(10, 5, 30, 0.85);
+  border: 2px solid rgba(160, 130, 255, 0.45);
+  box-shadow:
+    0 0 24px rgba(120, 80, 255, 0.3),
+    inset 0 0 40px rgba(80, 40, 180, 0.1);
+  padding: 24px 20px 20px;
 }
 
 .roompage-modal-frame-wrapper {
@@ -781,10 +787,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: 40px;
+  padding: 40px 16px 12px;
   box-sizing: border-box;
   color: #4d27ff;
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .roompage-modal-content-overlay p {
@@ -797,8 +803,8 @@
   background: #ffffff;
   color: #000000;
   display: inline-block;
-  padding: 10px 20px;
-  margin-top: 25px;
+  padding: 6px 16px;
+  margin-top: 20px;
   font-size: 14px;
   letter-spacing: 2px;
 }
@@ -812,7 +818,7 @@
 
 .roompage-modal-yes,
 .roompage-modal-no {
-  width: 52px;
+  width: 60px;
   height: 26px;
   border: none;
   background: transparent;
@@ -893,6 +899,54 @@
 
 .roompage-settings-copy-btn:hover {
   background: rgba(24, 255, 244, 0.25);
+}
+
+.roompage-settings-section {
+  width: 100%;
+}
+
+.roompage-settings-bgm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.roompage-settings-bgm-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.roompage-settings-bgm-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.roompage-settings-volume-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(179, 158, 255, 0.4);
+  outline: none;
+  cursor: pointer;
+}
+
+.roompage-settings-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #b39eff;
+  cursor: pointer;
 }
 
 .roompage-settings-divider {

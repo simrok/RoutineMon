@@ -282,6 +282,7 @@ export default function UploadPage() {
   // ── 핸들러: 일일 업로드 팝업 열기 ────────────────────────
   const handleOpenDailyUpload = () => {
     if (getDailySlot(myPlayerId, selectedDailyDot)) return
+    if (!myPlayer?.routines[selectedDailyDot]) return  // 해당 dot에 루틴 없음
     setUploadMode('daily')
     setSelectedRoutineIndex(selectedDailyDot)
     setPreviewImage(null)
@@ -534,28 +535,36 @@ export default function UploadPage() {
                 </div>
 
                 {/* Daily 슬롯 */}
-                <div
-                  className={`uploadscreen-upload-slot ${player.colorClass}`}
-                  onClick={isMyPlayer ? handleOpenDailyUpload : undefined}
-                  style={{ cursor: isMyPlayer ? 'pointer' : 'default' }}
-                >
-                  {dailySlot ? (
-                    <>
-                      <img className="uploadscreen-uploaded-img" src={toAbsoluteUrl(dailySlot.imageUrl)!} alt="uploaded" />
-                      {dailySlot.uploadTime && (
-                        <span className="uploadscreen-upload-time">{dailySlot.uploadTime}</span>
+                {(() => {
+                  const hasRoutine = !!player.routines[selectedDailyDot]
+                  const slotClickable = isMyPlayer && hasRoutine
+                  return (
+                    <div
+                      className={`uploadscreen-upload-slot ${player.colorClass}`}
+                      onClick={slotClickable ? handleOpenDailyUpload : undefined}
+                      style={{ cursor: slotClickable ? 'pointer' : 'default' }}
+                    >
+                      {dailySlot ? (
+                        <>
+                          <img className="uploadscreen-uploaded-img" src={toAbsoluteUrl(dailySlot.imageUrl)!} alt="uploaded" />
+                          {dailySlot.uploadTime && (
+                            <span className="uploadscreen-upload-time">{dailySlot.uploadTime}</span>
+                          )}
+                          {isMyPlayer && (
+                            <button type="button" className="uploadscreen-star-btn"
+                              onClick={(e) => handleOpenDeletePopup(e, player.id, 'daily')}>
+                              <img src="/assets/button/star.png" alt="delete" />
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        isMyPlayer && hasRoutine && (
+                          <img className="uploadscreen-add-icon" src="/assets/button/add.png" alt="add" />
+                        )
                       )}
-                      {isMyPlayer && (
-                        <button type="button" className="uploadscreen-star-btn"
-                          onClick={(e) => handleOpenDeletePopup(e, player.id, 'daily')}>
-                          <img src="/assets/button/star.png" alt="delete" />
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    isMyPlayer && <img className="uploadscreen-add-icon" src="/assets/button/add.png" alt="add" />
-                  )}
-                </div>
+                    </div>
+                  )
+                })()}
 
                 {/* Party 슬롯 */}
                 <div
@@ -642,15 +651,18 @@ export default function UploadPage() {
               {uploadMode === 'party' && validationState === 'checking' && (
                 <div className="uploadscreen-validation-overlay">
                   <div className="uploadscreen-validation-checking">
-                    <span className="uploadscreen-validation-spinner">🤖</span>
-                    <p>AI가 사진을 판별 중입니다...</p>
+                    <div className="uploadscreen-pixel-spinner">
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="uploadscreen-pixel-spinner-dot" style={{ animationDelay: `${i * 0.11}s` }} />
+                      ))}
+                    </div>
+                    <p>루틴몬이 열심히<br />사진을 판별 중입니다...</p>
                   </div>
                 </div>
               )}
               {uploadMode === 'party' && validationState === 'approved' && (
                 <div className="uploadscreen-validation-overlay">
                   <div className="uploadscreen-validation-approved">
-                    <span>✅</span>
                     <p>인증 성공!</p>
                   </div>
                 </div>
@@ -658,7 +670,6 @@ export default function UploadPage() {
               {uploadMode === 'party' && validationState === 'rejected' && (
                 <div className="uploadscreen-validation-overlay">
                   <div className="uploadscreen-validation-rejected">
-                    <span>❌</span>
                     <p>{rejectionReason}</p>
                     <button className="uploadscreen-retry-btn" onClick={() => {
                       setValidationState('idle')

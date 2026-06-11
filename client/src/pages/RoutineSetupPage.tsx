@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
 import { registerPlayer } from '../api/rooms'
 import ConfirmPopup from '../components/ConfirmPopup'
+import { useBgm } from '../context/BgmContext'
 import './RoutineSetupPage.css'
 
 const BASE_URL = 'http://localhost:4000/api'
@@ -34,6 +35,7 @@ export default function RoutineSetupPage() {
   const { roomCode: urlRoomCode } = useParams<{ roomCode?: string }>()
 
   const { room, pendingPlayer, setMyPlayer, setMyPin, setPendingPlayer } = useRoomStore()
+  const { muted, setMuted, restart } = useBgm()
 
   const roomCode = urlRoomCode ?? room?.roomCode ?? ''
 
@@ -45,7 +47,7 @@ export default function RoutineSetupPage() {
   const [showExitPopup, setShowExitPopup] = useState(false)
   const [homeHover, setHomeHover] = useState(false)
 
-  const canSave = slots.filter((s) => s.emoji && s.title.trim()).length >= MIN_REQUIRED
+  const canSave = slots.slice(0, MIN_REQUIRED).every((s) => s.emoji && s.title.trim())
 
   const handleTitleChange = (index: number, value: string) => {
     setSlots((prev) => {
@@ -102,6 +104,7 @@ export default function RoutineSetupPage() {
       setMyPlayer({ ...player, roomId: room?.roomId ?? 0 })
       setMyPin(pendingPlayer.pin)
       setPendingPlayer(null)
+      restart()
       navigate(`/room/${roomCode}`, { replace: true })
     } catch (e) {
       console.error('등록 오류:', e)
@@ -118,6 +121,11 @@ export default function RoutineSetupPage() {
       {/* 이전 버튼 */}
       <button className="back-btn" onClick={(e) => { e.stopPropagation(); navigate(-1) }}>
         <img src="/assets/button/previous.png" alt="back" />
+      </button>
+
+      {/* 스피커 버튼 */}
+      <button className="speaker-btn" onClick={(e) => { e.stopPropagation(); setMuted(!muted) }}>
+        <img src={muted ? '/assets/button/speaker2.png' : '/assets/button/speaker1.png'} alt="speaker" />
       </button>
 
       {/* 홈 버튼 */}
@@ -162,8 +170,10 @@ export default function RoutineSetupPage() {
                     onClick={(e) => { e.stopPropagation(); handleEmojiBtnClick(i) }}
                   >
                     <button className="routine-emoji-btn" type="button">
-                      <img src="/assets/frame/nickpin_frame.png" alt="frame" />
-                      <span>{slot.emoji || '+'}</span>
+                      {slot.emoji
+                        ? <span className="routine-emoji-selected">{slot.emoji}</span>
+                        : <img src="/assets/button/add.png" alt="add" />
+                      }
                     </button>
 
                     {emojiPopupIndex === i && (
@@ -191,7 +201,7 @@ export default function RoutineSetupPage() {
                     <input
                       className="routine-title-input"
                       type="text"
-                      placeholder="루틴 이름"
+                      placeholder="루틴을 입력하세요."
                       value={slot.title}
                       maxLength={MAX_TITLE_LENGTH}
                       onChange={(e) => handleTitleChange(i, e.target.value)}
