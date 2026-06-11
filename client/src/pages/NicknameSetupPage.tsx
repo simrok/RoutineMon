@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
 import ConfirmPopup from '../components/ConfirmPopup'
-import { createRoom, registerPlayer } from '../api/rooms'
+import { createRoom } from '../api/rooms'
 import './NicknameSetupPage.css'
 
 const MAX_NICKNAME_LENGTH = 7
@@ -11,7 +11,7 @@ const PIN_LENGTH = 4
 function validateNickname(value: string): string | null {
   if (value.length === 0) return null
   if (value.length > MAX_NICKNAME_LENGTH) return 'fail'
-  if (!/^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ]+$/.test(value)) return 'fail'
+  if (!/^[a-zA-Z0-9가-힣]+$/.test(value)) return 'fail'
   return 'ok'
 }
 
@@ -29,12 +29,13 @@ export default function NicknameSetupPage() {
   // roomCode가 없으면 방 신설 중, 있으면 방 참가 중
   const isCreating = !roomCode
 
-  const { setRoom, setMyPlayer, pendingMaxPlayers } = useRoomStore()
+  const { setRoom, setPendingPlayer, pendingMaxPlayers } = useRoomStore()
 
   const [homeHover, setHomeHover] = useState(false)
   const [startHover, setStartHover] = useState(false)
   const [showExitPopup, setShowExitPopup] = useState(false)
   const [loading, setLoading] = useState(false)
+  const submittingRef = useRef(false)
 
   // 닉네임
   const [nickname, setNickname] = useState('')
@@ -99,37 +100,37 @@ export default function NicknameSetupPage() {
   }
 
   const handleStart = async () => {
-    if (!canStart || loading) return
+    if (!canStart || loading || submittingRef.current) return
+    submittingRef.current = true
     const pin = pinDigits.join('')
     const slot = Number(slotNumber)
 
     setLoading(true)
     try {
       if (isCreating) {
-        // 방 신설: POST /rooms → POST /players 순서로 호출 (이 시점에 방이 DB에 생성됨)
-        const { roomCode: newCode } = await createRoom(pendingMaxPlayers)
-        const { player } = await registerPlayer(newCode, slot, nickname, pin)
-
+        // 방 신설: 방만 먼저 생성, 플레이어는 루틴 설정 완료 시 등록
+        const { roomCode: newCode, roomId } = await createRoom(pendingMaxPlayers)
         setRoom({
-          roomId: player.roomId,
+          roomId,
           roomCode: newCode,
           roomName: '루틴몬 방',
           maxPlayers: pendingMaxPlayers,
-          currentPlayers: 1,
+          currentPlayers: 0,
           createdAt: new Date().toISOString(),
         })
-        setMyPlayer(player)
-        navigate(`/room/${newCode}`)
+        setPendingPlayer({ nickname, pin, slotNumber: slot })
+        navigate(`/create/routines`, { replace: true })
       } else {
-        // 방 참가: POST /players만 호출
-        const { player } = await registerPlayer(roomCode!, slot, nickname, pin)
-        setMyPlayer(player)
-        navigate(`/room/${roomCode}`)
+        // 방 참가: 플레이어 정보 임시 저장, 루틴 설정 완료 시 등록
+        setPendingPlayer({ nickname, pin, slotNumber: slot })
+        navigate(`/join/${roomCode}/routines`)
       }
     } catch (e) {
       console.error('방 신설/참가 실패:', e)
+      submittingRef.current = false
     } finally {
       setLoading(false)
+      submittingRef.current = false
     }
   }
 

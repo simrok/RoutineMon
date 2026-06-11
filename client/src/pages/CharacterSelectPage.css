@@ -90,15 +90,23 @@
   align-items: center;
   gap: 6px;
   cursor: pointer;
+  position: relative;
+  padding-right: 20px;
 }
 
 .player-row.inactive {
   cursor: default;
 }
 
-/* 이미 점유된 슬롯 — 선택은 가능하지만 PIN 인증 필요 */
-.player-row.occupied .nickname-frame-img {
-  opacity: 0.75;
+/* 점유 여부 dot */
+.slot-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* 별 */

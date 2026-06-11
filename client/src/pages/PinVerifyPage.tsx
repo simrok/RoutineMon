@@ -11,7 +11,7 @@ export default function PinVerifyPage() {
   const navigate = useNavigate()
   const { roomCode, slotNumber } = useParams<{ roomCode: string; slotNumber: string }>()
 
-  const { room, setMyPlayer } = useRoomStore()
+  const { room, setMyPlayer, setMyPin } = useRoomStore()
 
   // 해당 슬롯의 닉네임 찾기
   const occupiedPlayer = room?.players?.find(p => p.slotNumber === Number(slotNumber))
@@ -56,6 +56,7 @@ export default function PinVerifyPage() {
     try {
       const { player } = await verifyPin(roomCode!, slot, pin)
       setMyPlayer(player)
+      setMyPin(pin)
       navigate(`/room/${roomCode}`)
     } catch {
       setPinError(true)

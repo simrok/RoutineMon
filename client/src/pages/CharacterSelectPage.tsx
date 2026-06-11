@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
 import ConfirmPopup from '../components/ConfirmPopup'
+import { getRoom } from '../api/rooms'
 import './CharacterSelectPage.css'
 
 export default function CharacterSelectPage() {
@@ -11,10 +12,38 @@ export default function CharacterSelectPage() {
   // roomCode가 없으면 방 신설 중, 있으면 방 참가 중
   const isCreating = !roomCode
 
-  const { room, playerColors, pendingMaxPlayers } = useRoomStore()
+  const { room, setRoom, myPlayer, playerColors, pendingMaxPlayers } = useRoomStore()
+
+  // 방 신설 흐름: 이미 방에 입장한 상태면 기존 방으로 리다이렉트 (뒤로가기 방지)
+  useEffect(() => {
+    if (isCreating && myPlayer && room?.roomCode) {
+      navigate(`/room/${room.roomCode}`, { replace: true })
+    }
+  }, [])
+
+  // 방 참가 시: 마운트할 때마다 최신 방 정보 재조회 (뒤로가기 후 슬롯 현황 갱신)
+  useEffect(() => {
+    if (isCreating || !roomCode) return
+    getRoom(roomCode)
+      .then(data => {
+        setRoom({
+          roomId: data.roomId,
+          roomCode: data.roomCode,
+          roomName: '루틴몬 방',
+          maxPlayers: data.maxPlayers,
+          currentPlayers: data.players.length,
+          createdAt: new Date().toISOString(),
+          players: data.players,
+        })
+      })
+      .catch(err => console.error('방 정보 갱신 실패:', err))
+  }, [roomCode])
 
   // 방 신설: pendingMaxPlayers 사용 / 방 참가: 서버에서 받은 room.maxPlayers 사용
   const maxPlayers = isCreating ? pendingMaxPlayers : (room?.maxPlayers ?? 5)
+
+  // 참가 모드에서 isActive 결정 기준도 maxPlayers로 통일
+
 
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null)
   const [startHover, setStartHover] = useState(false)
@@ -27,6 +56,7 @@ export default function CharacterSelectPage() {
   }
 
   const roomPlayers = isCreating ? [] : (room?.players ?? [])
+
 
   const handleStart = () => {
     if (!selectedSlot) return
@@ -119,14 +149,25 @@ export default function CharacterSelectPage() {
                       className="player-nickname"
                       style={{
                         color: isActive
-                          ? isSelected ? '#4800FF' : isOccupied ? '#888888' : '#000000'
+                          ? isSelected ? '#4800FF' : '#000000'
                           : '#B6B6B6',
                       }}
                     >
-                      {occupiedPlayer ? occupiedPlayer.nickname : 'Unknown'}
+                      {occupiedPlayer ? occupiedPlayer.nickname : '비어있음'}
                     </span>
                   </div>
                 </div>
+
+                {/* 점유 dot */}
+                {isActive && (
+                  <div
+                    className="slot-dot"
+                    style={{
+                      background: isOccupied ? '#00e78c' : '#dddddd',
+                      border: 'none',
+                    }}
+                  />
+                )}
               </div>
             )
           })}
