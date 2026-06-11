@@ -1,0 +1,1130 @@
+@font-face {
+  font-family: 'GalmuriMono9';
+  src: url('/assets/fonts/GalmuriMono9.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* =========================
+   LAYOUT & CONTAINER
+========================= */
+.roompage-container {
+  font-family: 'GalmuriMono9', monospace;
+  width: 100%;
+  max-width: 430px;
+  min-height: 880px;
+  margin: 0 auto;
+  background-image: url('/assets/backgroundImage/background.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 40px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.roompage-header,
+.roompage-mon-area,
+.roompage-exp-area,
+.roompage-player-area,
+.roompage-start-btn,
+.roompage-daily-box,
+.roompage-party-box,
+.roompage-modal-backdrop {
+  position: absolute;
+  z-index: 2;
+}
+
+/* =========================
+   HEADER & LOGO
+========================= */
+.roompage-header {
+  top: 0;
+  left: 0;
+  width: 430px;
+  height: 116px;
+}
+
+.roompage-logo-area {
+  position: absolute;
+  top: 20px;
+  left: 104px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.roompage-logo {
+  width: 210px;
+  image-rendering: pixelated;
+}
+
+.roompage-logo-sub {
+  width: 100px;
+  margin-top: -5px;
+  image-rendering: pixelated;
+}
+
+/* =========================
+   SIDE BUTTONS
+========================= */
+.roompage-side-buttons {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  width: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.roompage-side-btn-home,
+.roompage-side-btn-dex,
+.roompage-side-btn-custom {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.roompage-side-btn-home img,
+.roompage-side-btn-dex img,
+.roompage-side-btn-custom img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roompage-side-btn-setting {
+  width: 55px;
+  height: 55px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.roompage-side-btn-setting img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  transform: scale(1.1) translateY(-6px);
+}
+
+/* =========================
+   MON STATUS
+========================= */
+.roompage-mon-area {
+  top: 84px;
+  left: 58px;
+  width: 315px;
+  display: grid;
+  grid-template-columns: 150px 130px;
+  column-gap: 0.1px;
+  align-items: start;
+}
+
+.roompage-mon-left {
+  text-align: center;
+}
+
+.roompage-mon-frame {
+  position: relative;
+  width: 156px;
+  height: 130px;
+}
+
+.roompage-mon-frame-img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roompage-main-mon {
+  position: absolute;
+  left: 36px;
+  top: 5px;
+  width: 84px;
+  height: 120px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  animation: main-mon-breathe 4s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes main-mon-breathe {
+  0%   { transform: scaleX(1)    scaleY(1)    rotate(0deg);   }
+  25%  { transform: scaleX(1.04) scaleY(0.97) rotate(-0.8deg);}
+  50%  { transform: scaleX(0.97) scaleY(1.05) rotate(0deg);   }
+  75%  { transform: scaleX(1.04) scaleY(0.97) rotate(0.8deg); }
+  100% { transform: scaleX(1)    scaleY(1)    rotate(0deg);   }
+}
+
+.roompage-mon-name {
+  color: #18fff4;
+  font-size: 14px;
+  margin: 0.1px 0 0;
+  line-height: 0.01;
+}
+
+.roompage-mon-right {
+  position: relative;
+  padding-top: 5px;
+}
+
+.roompage-question-btn {
+  position: absolute;
+  top: -8px;
+  right: -20px;
+  width: 30px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.roompage-question-btn img {
+  width: 100%;
+  height: 80%;
+  image-rendering: pixelated;
+}
+
+.roompage-face-bubble {
+  position: relative;
+  width: 140px;
+  height: 94px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.roompage-face-bubble img {
+  position: absolute;
+  inset: 0;
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roompage-face-bubble span {
+  position: relative;
+  z-index: 2;
+  color: #4d27ff;
+  font-size: 18px;
+  transform: translate(-6px,-5px);
+}
+
+.roompage-level-text {
+  color: #efff00;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 4px;
+  line-height: 1.15;
+}
+
+.roompage-level-text p {
+  margin: 2px 0;
+}
+
+/* =========================
+   EXP BAR
+========================= */
+.roompage-exp-area {
+  top: 240px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  display: grid;
+  grid-template-columns: 45px 74px 130px;
+  align-items: center;
+  column-gap: 0px;
+}
+
+.roompage-exp-label {
+  color: #ffffff;
+  font-size: 14px;
+  margin-left: -3px;
+}
+
+.roompage-exp-value {
+  color: #efff00;
+  font-size: 12px;
+  margin-left: -3px;
+  white-space: nowrap;
+}
+
+.roompage-exp-wrap {
+  position: relative;
+  width: 132px;
+  height: 27px;
+}
+
+.roompage-exp-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 120%;
+  image-rendering: pixelated;
+}
+
+.roompage-exp-fill-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: pixelated;
+}
+
+/* =========================
+   PLAYERS AREA
+========================= */
+.roompage-player-area {
+  top: 260px;
+  left: 25px;
+  width: 380px;
+}
+
+.roompage-player-title {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00ffba;
+  font-size: 16px;
+  letter-spacing: 8px;
+  margin-top: 24px;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.roompage-players-question-btn {
+  position: absolute;
+  left: calc(50% + 52px);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  width: 30px;
+  height: 28px;
+}
+
+.roompage-players-question-btn img {
+  width: 100%;
+  height: 80%;
+  image-rendering: pixelated;
+}
+
+.roompage-player-list {
+  display: grid;
+  grid-template-columns: repeat(5, 74px);
+  justify-content: center;
+  gap: 0px;
+}
+
+.roompage-player-item {
+  position: relative;
+  width: 74px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.roompage-rank-img {
+  position: absolute;
+  top: -22px;
+  left: 18px;
+  width: 35px;
+  image-rendering: pixelated;
+  z-index: 4;
+}
+
+/* PLAYER CARDS */
+.roompage-player-card1 {
+  width: 78px;
+  height: 98px;
+  position: relative;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.roompage-player-card2 {
+  width: 126px;
+  height: 98px;
+  position: relative;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.roompage-player-card1:disabled,
+.roompage-player-card2:disabled {
+  cursor: default;
+}
+
+/* PLAYER FRAMES */
+.roompage-player-frame1,
+.roompage-player-frame2 {
+  width: 100%;
+  height: 95%;
+  object-fit: fill;
+  image-rendering: pixelated;
+}
+
+/* PLAYER MONSTERS */
+.roompage-player-mon1 {
+  position: absolute;
+  left: 8px;
+  top: 24px;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  animation: mon-float 3s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.roompage-player-mon2 {
+  position: absolute;
+  left: 32px;
+  top: 24px;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  animation: mon-float 3s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes mon-float {
+  0%   { transform: translateY(0px)   rotate(-1deg); }
+  30%  { transform: translateY(-6px)  rotate(0deg);  }
+  60%  { transform: translateY(-8px)  rotate(1deg);  }
+  80%  { transform: translateY(-4px)  rotate(0.5deg);}
+  100% { transform: translateY(0px)   rotate(-1deg); }
+}
+
+.roompage-add-icon {
+  position: absolute;
+  left: 40px;
+  top: 30px;
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* OPEN 슬롯 (max_players 범위 내, 아직 미점유) */
+.roompage-player-card-open {
+  opacity: 0.75;
+}
+
+.roompage-open-slot-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #18fff4;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  pointer-events: none;
+}
+
+.roompage-nickname-wrap {
+  width: 68px;
+  margin-top: -1px;
+}
+
+.roompage-nickname-wrap span {
+  display: block;
+  font-size: 10px;
+  text-align: center;
+  word-break: break-all;
+  line-height: 1.3;
+}
+
+
+/* =========================
+   START BUTTON
+========================= */
+.roompage-start-btn {
+  top: 465px;
+  left: 130px;
+  width: 170px;
+  height: 64px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  margin-top: 33px;
+}
+
+.roompage-start-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* =========================
+   QUEST BOXES
+========================= */
+.roompage-daily-box,
+.roompage-party-box {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 370px;
+  box-sizing: border-box;
+  background: rgba(163, 131, 236, 0.58);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 35px;
+}
+
+.roompage-daily-box {
+  top: 545px;
+  height: 80px;
+  padding-top: 16px;
+}
+
+.roompage-party-box {
+  top: 640px;
+  min-height: 142px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.roompage-daily-box h2,
+.roompage-party-box h2 {
+  margin: 0;
+  font-size: 14px;
+  font-family: 'GalmuriMono9', monospace;
+  font-weight: normal;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.roompage-quest-stars {
+  width: 160px;
+  margin-top: 6px;
+  image-rendering: pixelated;
+}
+
+.roompage-box-question {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 30px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  z-index: 3;
+}
+
+.roompage-box-question img {
+  width: 100%;
+  height: 80%;
+  image-rendering: pixelated;
+}
+
+.roompage-party-empty {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 15px;
+  margin-top: 30px;
+}
+
+.roompage-party-quest-content {
+  color: #ffffff;
+  font-size: 13px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.roompage-party-alert {
+  color: #efff00;
+  font-size: 12px;
+  font-family: 'GalmuriMono9', monospace;
+  margin-top: 6px;
+  margin-bottom: 12px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.roompage-party-actions {
+  display: flex;
+  justify-content: center;
+  gap: 34px;
+}
+
+.roompage-party-actions button {
+  width: 70px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.roompage-party-actions img {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.roompage-party-active {
+  color: #18fff4;
+  font-size: 17px;
+  margin-top: 22px;
+  margin-bottom: 14px;
+}
+
+.roompage-party-stars {
+  width: 175px;
+  image-rendering: pixelated;
+}
+
+@keyframes timelimit-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+
+.roompage-time-limit {
+  width: 225px;
+  margin-top: 16px;
+  background: #ffffff;
+  color: #000000;
+  padding: 9px 0;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 30분 이하 */
+.roompage-time-limit.time-warn {
+  background: #ffffff;
+  color: #FF0077;
+}
+
+/* 10분 이하 — 깜빡임 */
+.roompage-time-limit.time-critical {
+  background: #ffffff;
+  color: #FF0077;
+  animation: timelimit-blink 1s ease-in-out infinite;
+}
+
+/* =========================
+   MODAL & TIMER
+========================= */
+.roompage-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(142, 126, 218, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+/* 인원 추가 팝업 */
+.roompage-add-slot-popup {
+  background: rgba(10, 10, 30, 0.95);
+  border: 2px solid #18fff4;
+  border-radius: 12px;
+  padding: 28px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 260px;
+  font-family: 'GalmuriMono9', monospace;
+}
+
+.roompage-add-slot-title {
+  color: #18fff4;
+  font-size: 15px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.roompage-add-slot-desc {
+  color: #cccccc;
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.roompage-add-slot-code {
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  background: rgba(24, 255, 244, 0.1);
+  border: 1px solid #18fff4;
+  border-radius: 8px;
+  padding: 8px 20px;
+}
+
+.roompage-add-slot-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.roompage-add-slot-confirm,
+.roompage-add-slot-cancel {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.roompage-add-slot-confirm {
+  background: #18fff4;
+  color: #000000;
+}
+
+.roompage-add-slot-cancel {
+  background: rgba(255,255,255,0.15);
+  color: #ffffff;
+}
+
+.roompage-add-slot-confirm:hover,
+.roompage-add-slot-cancel:hover {
+  opacity: 0.8;
+}
+
+.roompage-add-slot-copy {
+  background: #18fff4;
+  color: #000000;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.roompage-add-slot-copy:hover {
+  opacity: 0.8;
+}
+
+.roompage-party-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 380px;
+  background: rgba(10, 5, 30, 0.85);
+  border: 2px solid rgba(160, 130, 255, 0.45);
+  box-shadow:
+    0 0 24px rgba(120, 80, 255, 0.3),
+    inset 0 0 40px rgba(80, 40, 180, 0.1);
+  padding: 24px 20px 20px;
+}
+
+.roompage-modal-frame-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.roompage-modal-frame-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.roompage-invisible-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.roompage-modal-content-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px 12px;
+  box-sizing: border-box;
+  color: #4d27ff;
+  font-size: 15px;
+}
+
+.roompage-modal-content-overlay p {
+  margin: 0;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.roompage-modal-timer-box {
+  background: #ffffff;
+  color: #000000;
+  display: inline-block;
+  padding: 6px 16px;
+  margin-top: 20px;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.roompage-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 16px;
+}
+
+.roompage-modal-yes,
+.roompage-modal-no {
+  width: 60px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.roompage-modal-yes img,
+.roompage-modal-no img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* =========================
+   SETTINGS POPUP
+========================= */
+.roompage-settings-popup {
+  width: 300px;
+  background: rgba(0, 0, 0, 0.9);
+  padding: 28px 24px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 2px solid rgba(160, 130, 255, 0.45);
+  box-shadow:
+    0 0 24px rgba(120, 80, 255, 0.3),
+    inset 0 0 40px rgba(80, 40, 180, 0.1);
+}
+
+.roompage-settings-title {
+  font-size: 20px;
+  color: #d4b8ff;
+  margin: 0 0 20px;
+  letter-spacing: 7px;
+  text-align: center;
+}
+
+.roompage-settings-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.roompage-settings-label {
+  font-size: 11px;
+  color: #a090cc;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.roompage-settings-code-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.roompage-settings-code {
+  font-size: 22px;
+  color: #ffffff;
+  letter-spacing: 6px;
+}
+
+.roompage-settings-copy-btn {
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 11px;
+  color: #18fff4;
+  background: rgba(24, 255, 244, 0.12);
+  border: 1px solid #18fff4;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.roompage-settings-copy-btn:hover {
+  background: rgba(24, 255, 244, 0.25);
+}
+
+.roompage-settings-section {
+  width: 100%;
+}
+
+.roompage-settings-bgm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.roompage-settings-bgm-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.roompage-settings-bgm-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.roompage-settings-volume-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(179, 158, 255, 0.4);
+  outline: none;
+  cursor: pointer;
+}
+
+.roompage-settings-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #b39eff;
+  cursor: pointer;
+}
+
+.roompage-settings-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(179, 158, 255, 0.25);
+  margin: 20px 0;
+}
+
+.roompage-settings-share-btn {
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 12px;
+  color: #b3f0ff;
+  background: rgba(100, 200, 255, 0.1);
+  border: 1px solid #64c8ff;
+  padding: 9px 20px;
+  cursor: pointer;
+  width: 70%;
+  transition: background 0.15s;
+  margin-top: 15px;
+}
+
+.roompage-settings-share-btn:hover {
+  background: rgba(100, 200, 255, 0.22);
+}
+
+.roompage-settings-leave-btn {
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 13px;
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid #ff6b6b;
+  padding: 9px 28px;
+  cursor: pointer;
+  width: 70%;
+  transition: background 0.15s;
+}
+
+.roompage-settings-leave-btn:hover {
+  background: rgba(255, 107, 107, 0.22);
+}
+
+.roompage-settings-confirm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.roompage-settings-confirm-text {
+  font-size: 13px;
+  color: #efff00;
+  margin: 0;
+  text-align: center;
+}
+
+.roompage-settings-confirm-actions {
+  display: flex;
+  gap: 24px;
+}
+
+.roompage-settings-confirm-yes,
+.roompage-settings-confirm-no {
+  width: 52px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.roompage-settings-confirm-yes img,
+.roompage-settings-confirm-no img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roompage-settings-close-btn {
+  display: block;
+  margin: 0 auto;
+  width: 78px;
+  height: 39px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.roompage-settings-close-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+/* =========================
+   MON INFO POPUP
+========================= */
+
+.mon-info-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.mon-info-popup {
+  width: 340px;
+  max-height: 82vh;
+  overflow-y: auto;
+  background: rgba(30, 14, 72, 0.97);
+  border: 3px solid #8f6cff;
+  padding: 24px 22px 20px;
+  box-sizing: border-box;
+}
+
+.mon-info-title {
+  font-size: 15px;
+  color: #d4b8ff;
+  margin: 0 0 18px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.mon-info-section {
+  margin-bottom: 4px;
+}
+
+.mon-info-section-title {
+  font-size: 13px;
+  color: #c4a8ff;
+  margin: 0 0 6px;
+  font-weight: bold;
+}
+
+.mon-info-desc {
+  font-size: 11px;
+  color: #e0d4ff;
+  margin: 0;
+  line-height: 1.9;
+}
+
+.mon-info-face {
+  color: #18fff4;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.mon-info-accent {
+  color: #18fff4;
+  font-weight: bold;
+}
+
+.mon-info-divider {
+  height: 1px;
+  background: rgba(179, 158, 255, 0.25);
+  margin: 12px 0;
+}
+
+.mon-info-ok-btn {
+  display: block;
+  margin: 20px auto 0;
+  width: 78px;
+  height: 39px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.mon-info-ok-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}

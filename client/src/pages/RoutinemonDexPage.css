@@ -1,0 +1,573 @@
+@font-face {
+  font-family: 'GalmuriMono9';
+  src: url('/assets/fonts/GalmuriMono9.woff2') format('woff2'),
+       url('/assets/fonts/GalmuriMono9.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* ── 페이지 / 폰 래퍼 ───────────────────────────────── */
+.dexscreen-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #111219;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-x: hidden;
+  font-family: 'GalmuriMono9', monospace;
+}
+
+.dexscreen-phone {
+  position: relative;
+  width: 430px;
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(4, 6, 40, 0.15), rgba(4, 6, 40, 0.15)),
+    url('/assets/backgroundImage/background.png');
+  background-size: cover;
+  background-position: center;
+  padding: 28px 28px 36px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.dexscreen-phone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(#ffffff 1px, transparent 1px),
+    radial-gradient(#d8caff 1px, transparent 1px);
+  background-size: 38px 38px, 61px 61px;
+  background-position: 4px 12px, 22px 32px;
+  opacity: 0.45;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.dexscreen-header,
+.dexscreen-panel,
+.dexscreen-popup-backdrop {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── 헤더 ────────────────────────────────────────────── */
+.dexscreen-header {
+  height: 82px;
+  display: grid;
+  grid-template-columns: 58px 1fr 58px;
+  align-items: start;
+}
+
+.dexscreen-back-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.dexscreen-back-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.dexscreen-home-btn {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.dexscreen-home-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dexscreen-logo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 2px;
+}
+
+.dexscreen-logo {
+  width: 205px;
+  image-rendering: pixelated;
+}
+
+.dexscreen-logo-sub {
+  width: 145px;
+  margin-top: -3px;
+  image-rendering: pixelated;
+}
+
+/* ── 도감 패널 ───────────────────────────────────────── */
+.dexscreen-panel {
+  width: 100%;
+  min-height: 580px;
+  margin-top: 14px;
+  padding: 22px 20px 28px;
+  box-sizing: border-box;
+  background: rgba(10, 5, 30, 0.94);
+  border: 2px solid rgba(160, 130, 255, 0.45);
+  box-shadow:
+    0 0 24px rgba(120, 80, 255, 0.3),
+    inset 0 0 40px rgba(80, 40, 180, 0.1);
+}
+
+/* 패널 헤더 */
+.dexscreen-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(160, 130, 255, 0.25);
+}
+
+.dexscreen-panel-title {
+  color: #18fff4;
+  font-size: 18px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(24, 255, 244, 0.5);
+}
+
+.dexscreen-panel-count {
+  color: #9080b8;
+  font-size: 11px;
+}
+
+/* 패널 헤더 오른쪽 영역 */
+.dexscreen-panel-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 도감 설명 question 버튼 */
+.dexscreen-info-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.dexscreen-info-btn:hover {
+  opacity: 1;
+}
+
+.dexscreen-info-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* 로딩 */
+.dexscreen-loading {
+  color: #9080b8;
+  text-align: center;
+  font-size: 13px;
+  padding: 60px 0;
+}
+
+/* ── 카테고리 섹션 ───────────────────────────────────── */
+.dexscreen-category-section {
+  margin-bottom: 22px;
+}
+
+.dexscreen-category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dexscreen-category-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dexscreen-category-name {
+  color: #ffffff;
+  font-size: 13px;
+  flex: 1;
+}
+
+.dexscreen-category-name-dim {
+  color: #5a4d7a;
+}
+
+.dexscreen-category-count {
+  color: #6a5a9a;
+  font-size: 11px;
+}
+
+.dexscreen-coming-soon {
+  color: #4a3d6a;
+  font-size: 10px;
+  padding: 2px 8px;
+  border: 1px solid rgba(100, 80, 160, 0.35);
+}
+
+.dexscreen-coming-soon-bar {
+  height: 36px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px dashed rgba(100, 80, 160, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3a2d5a;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+/* ── 몬 카드 그리드 ──────────────────────────────────── */
+.dexscreen-mon-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.dexscreen-mon-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(160, 130, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 8px 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: 'GalmuriMono9', monospace;
+}
+
+.dexscreen-mon-obtained:hover {
+  background: rgba(160, 130, 255, 0.12);
+  border-color: rgba(24, 255, 244, 0.55);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(24, 255, 244, 0.15);
+}
+
+.dexscreen-mon-locked {
+  opacity: 0.45;
+  cursor: pointer;
+}
+
+.dexscreen-mon-locked:hover {
+  opacity: 0.6;
+}
+
+.dexscreen-mon-img-wrap {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.dexscreen-mon-img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.4));
+}
+
+.dexscreen-mon-img-locked {
+  filter: grayscale(100%) brightness(0.35);
+}
+
+.dexscreen-mon-no {
+  color: #6a5a9a;
+  font-size: 9px;
+  margin-bottom: 2px;
+}
+
+.dexscreen-mon-name {
+  color: #e0d8ff;
+  font-size: 12px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.dexscreen-mon-rarity {
+  font-size: 9px;
+}
+
+/* ── 팝업 ────────────────────────────────────────────── */
+.dexscreen-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+}
+
+.dexscreen-popup {
+  width: 340px;
+  background: rgba(12, 6, 36, 0.98);
+  border: 2px solid rgba(160, 130, 255, 0.7);
+  box-shadow:
+    0 0 30px rgba(140, 100, 255, 0.5),
+    inset 0 0 30px rgba(80, 40, 180, 0.08);
+  padding: 26px 20px 22px;
+  box-sizing: border-box;
+  position: relative;
+  color: #ffffff;
+  text-align: center;
+}
+
+.dexscreen-popup-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  color: #9070d0;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.dexscreen-popup-close:hover {
+  color: #efff00;
+}
+
+.dexscreen-popup-top {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.dexscreen-popup-no {
+  color: #7060a8;
+  font-size: 11px;
+}
+
+.dexscreen-popup-rarity {
+  font-size: 10px;
+  padding: 1px 7px;
+  border: 1px solid currentColor;
+  opacity: 0.85;
+}
+
+.dexscreen-popup-name {
+  color: #18fff4;
+  font-size: 20px;
+  margin: 0 0 20px;
+  text-shadow: 0 0 10px rgba(24, 255, 244, 0.4);
+  font-family: 'GalmuriMono9', monospace;
+  font-weight: normal;
+}
+
+/* 진화 단계 그리드 */
+.dexscreen-popup-stages {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.dexscreen-popup-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.dexscreen-stage-box {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dexscreen-stage-unlocked {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1.5px solid rgba(24, 255, 244, 0.35);
+}
+
+.dexscreen-stage-locked {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px solid rgba(100, 80, 160, 0.25);
+}
+
+.dexscreen-stage-img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.dexscreen-stage-question {
+  color: #3a2d5a;
+  font-size: 22px;
+  font-family: 'GalmuriMono9', monospace;
+}
+
+.dexscreen-stage-label {
+  color: #9080b8;
+  font-size: 9px;
+}
+
+/* 팝업 힌트 */
+.dexscreen-popup-hint {
+  color: #6a5a9a;
+  font-size: 10px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── 도감 설명 팝업 (mon-info 공용 스타일) ───────────── */
+.mon-info-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.mon-info-popup {
+  width: 340px;
+  max-height: 82vh;
+  overflow-y: auto;
+  background: rgba(20, 13, 48, 0.97);
+  border: 2px solid rgba(179, 158, 255, 0.6);
+  box-shadow: 0 0 24px rgba(140, 100, 255, 0.45);
+  padding: 24px 22px 20px;
+  box-sizing: border-box;
+}
+
+.mon-info-title {
+  font-size: 15px;
+  color: #d4b8ff;
+  margin: 0 0 18px;
+  font-family: 'GalmuriMono9', monospace;
+  letter-spacing: 1px;
+}
+
+.mon-info-section {
+  margin-bottom: 4px;
+}
+
+.mon-info-section-title {
+  font-size: 13px;
+  color: #c4a8ff;
+  margin: 0 0 6px;
+  font-weight: bold;
+}
+
+.mon-info-desc {
+  font-size: 11px;
+  color: #e0d4ff;
+  margin: 0;
+  line-height: 1.9;
+}
+
+.mon-info-accent {
+  color: #18fff4;
+  font-weight: bold;
+}
+
+.mon-info-divider {
+  height: 1px;
+  background: rgba(179, 158, 255, 0.25);
+  margin: 12px 0;
+}
+
+.mon-info-ok-btn {
+  display: block;
+  margin: 20px auto 0;
+  width: 78px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.mon-info-ok-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* ── 반응형 ──────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .dexscreen-page {
+    align-items: stretch;
+  }
+
+  .dexscreen-phone {
+    width: 100vw;
+    min-height: 100vh;
+    padding: 24px 24px 34px;
+  }
+
+  .dexscreen-header {
+    grid-template-columns: 50px 1fr 50px;
+  }
+
+  .dexscreen-back-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .dexscreen-logo {
+    width: 190px;
+  }
+
+  .dexscreen-panel {
+    min-height: calc(100vh - 120px);
+    padding: 18px 16px 24px;
+  }
+
+  .dexscreen-mon-grid {
+    gap: 8px;
+  }
+
+  .dexscreen-popup {
+    width: calc(100vw - 48px);
+  }
+
+  .dexscreen-stage-box {
+    width: 52px;
+    height: 52px;
+  }
+
+  .dexscreen-stage-img {
+    width: 44px;
+    height: 44px;
+  }
+}

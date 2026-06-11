@@ -1,57 +1,54 @@
-import type { Room, Player } from '../types'
+const BASE_URL = 'http://localhost:4000/api'
 
-// 나중에 axios.post('http://localhost:4000/api/rooms') 로 교체
-export const createRoom = async (roomName: string): Promise<{ roomCode: string }> => {
-  console.log('createRoom:', roomName)
-  return { roomCode: '123456' }
+// [방 생성] POST /api/rooms
+export const createRoom = async (maxPlayers: number): Promise<{ roomCode: string; roomId: number }> => {
+  const res = await fetch(`${BASE_URL}/rooms`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ maxPlayers }),
+  })
+  const json = await res.json()
+  if (!json.success) throw new Error(json.error)
+  return { roomCode: json.data.roomCode, roomId: json.data.roomId }
 }
 
-// 나중에 axios.get(`http://localhost:4000/api/rooms/${roomCode}`) 로 교체
-export const getRoom = async (roomCode: string): Promise<Room> => {
-  console.log('getRoom:', roomCode)
-  return {
-    roomId: 1,
-    roomCode,
-    roomName: '루틴몬 테스트 방',
-    maxPlayers: 5,
-    currentPlayers: 2,
-    createdAt: new Date().toISOString(),
-  }
+// [방 정보 조회] GET /api/rooms/:roomCode
+export const getRoom = async (roomCode: string) => {
+  const res = await fetch(`${BASE_URL}/rooms/${roomCode}`)
+  const json = await res.json()
+  if (!json.success) throw new Error(json.error)
+  return json.data
 }
 
-// 나중에 axios.post(`http://localhost:4000/api/rooms/${roomCode}/players`) 로 교체
-export const joinRoom = async (
+// [플레이어 등록] POST /api/rooms/:roomCode/players
+export const registerPlayer = async (
   roomCode: string,
+  slotNumber: number,
   nickname: string,
-  characterType: string
-): Promise<{ player: Player; pinCode: string }> => {
-  console.log('joinRoom:', roomCode, nickname, characterType)
-  return {
-    player: {
-      playerId: 1,
-      roomId: 1,
-      slotNumber: 1,
-      nickname,
-      characterType,
-    },
-    pinCode: '1234',
-  }
+  pin: string,
+) => {
+  const res = await fetch(`${BASE_URL}/rooms/${roomCode}/players`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slotNumber, nickname, pin }),
+  })
+  const json = await res.json()
+  if (!json.success) throw new Error(json.error)
+  return { player: json.data } // { playerId, slotNumber, nickname }
 }
 
-// 나중에 axios.post(`http://localhost:4000/api/rooms/${roomCode}/players/${slotNumber}/verify`) 로 교체
+// [PIN 인증 - 재입장] POST /api/rooms/:roomCode/players/:slotNumber/verify
 export const verifyPin = async (
   roomCode: string,
   slotNumber: number,
-  pin: string
-): Promise<{ player: Player }> => {
-  console.log('verifyPin:', roomCode, slotNumber, pin)
-  return {
-    player: {
-      playerId: 1,
-      roomId: 1,
-      slotNumber,
-      nickname: '테스트유저',
-      characterType: 'rabbit',
-    },
-  }
+  pin: string,
+) => {
+  const res = await fetch(`${BASE_URL}/rooms/${roomCode}/players/${slotNumber}/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pin }),
+  })
+  const json = await res.json()
+  if (!json.success) throw new Error(json.error)
+  return { player: json.data }
 }

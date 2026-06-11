@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createRoom, joinRoom } from '../api/rooms'
+import { getRoom } from '../api/rooms'
 import { useRoomStore } from '../store/useRoomStore'
+import { useBgm } from '../context/BgmContext'
 import './LandingPage.css'
 
 export default function LandingPage() {
   const navigate = useNavigate()
-  const { setRoom, setMyPlayer, setIsHost } = useRoomStore()
+  const { setRoom, setPendingMaxPlayers, reset } = useRoomStore()
 
+  const { muted, setMuted } = useBgm()
   const [selectedPlayers, setSelectedPlayers] = useState<number | null>(null)
   const [roomCode, setRoomCode] = useState('')
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
@@ -15,49 +17,27 @@ export default function LandingPage() {
   const [startHover, setStartHover] = useState(false)
   const [homeHover, setHomeHover] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [joinError, setJoinError] = useState('')
 
-  const handleCreateRoom = async () => {
+  // 방 신설: maxPlayers 저장 후 슬롯 선택 페이지로 이동 (API 호출 없음)
+  const handleCreateRoom = () => {
     if (!selectedPlayers) return
-    setLoading(true)
-    try {
-      const { roomCode: newCode } = await createRoom('루틴몬 방')
-      const { player } = await joinRoom(newCode, '방장', 'rabbit')
-      setRoom({
-        roomId: 1,
-        roomCode: newCode,
-        roomName: '루틴몬 방',
-        maxPlayers: selectedPlayers,
-        currentPlayers: 1,
-        createdAt: new Date().toISOString(),
-      })
-      setMyPlayer(player)
-      setIsHost(true)
-      navigate(`/room/${newCode}/select`)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
+    reset()                          // 이전 방/플레이어 정보 초기화
+    setPendingMaxPlayers(selectedPlayers)
+    navigate('/create/select')
   }
 
+  // 방 참가: 방 코드 유효성 확인 후 슬롯 선택 페이지로 이동
   const handleJoinRoom = async () => {
     if (roomCode.length !== 6) return
     setLoading(true)
+    setJoinError('')
     try {
-      const { player } = await joinRoom(roomCode, '플레이어', 'rabbit')
-      setRoom({
-        roomId: 1,
-        roomCode,
-        roomName: '루틴몬 방',
-        maxPlayers: 5,
-        currentPlayers: 1,
-        createdAt: new Date().toISOString(),
-      })
-      setMyPlayer(player)
-      setIsHost(false)
-      navigate(`/room/${roomCode}/select`)
+      const room = await getRoom(roomCode)
+      setRoom(room)
+      navigate(`/join/${roomCode}/select`)
     } catch (e) {
-      console.error(e)
+      setJoinError('존재하지 않는 방 코드입니다.')
     } finally {
       setLoading(false)
     }
@@ -65,6 +45,11 @@ export default function LandingPage() {
 
   return (
     <div className="landing-container">
+
+      {/* 스피커 버튼 */}
+      <button className="speaker-btn" onClick={() => setMuted(!muted)}>
+        <img src={muted ? '/assets/button/speaker2.png' : '/assets/button/speaker1.png'} alt="speaker" />
+      </button>
 
       {/* 홈 버튼 */}
       <button
@@ -116,7 +101,7 @@ export default function LandingPage() {
             onMouseEnter={() => setCreateHover(true)}
             onMouseLeave={() => setCreateHover(false)}
             onClick={handleCreateRoom}
-            disabled={loading}
+            disabled={!selectedPlayers}
           >
             <img
               src={createHover ? '/assets/button/createroom2.png' : '/assets/button/createroom1.png'}
@@ -128,29 +113,38 @@ export default function LandingPage() {
 
       {/* 방 참여 섹션 */}
       <div className="join-section">
-        <div className="roomcode-frame">
-          <img src="/assets/frame/roomcode.png" alt="roomcode frame" />
-          <input
-            className="roomcode-input"
-            placeholder="방 코드 입력"
-            value={roomCode}
-            maxLength={6}
-            onChange={(e) => setRoomCode(e.target.value.replace(/\D/g, ''))}
-          />
+        <div className="join-section-row">
+          <div className="roomcode-frame">
+            <img src="/assets/frame/roomcode.png" alt="roomcode frame" />
+            <input
+              className="roomcode-input"
+              placeholder="방 코드 입력"
+              value={roomCode}
+              maxLength={6}
+              onChange={(e) => {
+                setRoomCode(e.target.value.replace(/\D/g, ''))
+                setJoinError('')
+              }}
+            />
+          </div>
+
+          <button
+            className="start-btn"
+            onMouseEnter={() => setStartHover(true)}
+            onMouseLeave={() => setStartHover(false)}
+            onClick={handleJoinRoom}
+            disabled={loading || roomCode.length !== 6}
+          >
+            <img
+              src={startHover ? '/assets/button/start2.png' : '/assets/button/start1.png'}
+              alt="START"
+            />
+          </button>
         </div>
 
-        <button
-          className="start-btn"
-          onMouseEnter={() => setStartHover(true)}
-          onMouseLeave={() => setStartHover(false)}
-          onClick={handleJoinRoom}
-          disabled={loading}
-        >
-          <img
-            src={startHover ? '/assets/button/start2.png' : '/assets/button/start1.png'}
-            alt="START"
-          />
-        </button>
+        {joinError && (
+          <p className="join-error">{joinError}</p>
+        )}
       </div>
 
     </div>

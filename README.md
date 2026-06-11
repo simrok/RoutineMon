@@ -1,5 +1,3 @@
-/RoutineMon/RoutineMon/client에서 npm install 후 npm run dev로 실행하세요.
-
 # 🕹️ RoutineMon — 루틴몬
 
 > 루틴몬(RoutineMon) 은 최대 5명의 친구가 방을 만들어 각자의 일일 루틴을 사진으로 인증하고, 
@@ -21,12 +19,14 @@
 
 | 구분 | 기술 |
 |------|------|
-| 프론트엔드 | React (Vite) |
+| 프론트엔드 | React + TypeScript (Vite) |
+| 상태 관리 | Zustand |
 | 백엔드 | Node.js + Express |
 | 실시간 통신 | Socket.io |
-| 데이터베이스 | MySQL |
-| 이미지 저장 | Cloudinary |
-| 스케줄러 | node-cron |
+| 데이터베이스 | MySQL (mysql2) |
+| 이미지 저장 | 로컬 서버 (`uploads/` 폴더, multer) |
+| AI 이미지 판별 | Anthropic Claude Haiku Vision API (`@anthropic-ai/sdk`) |
+| 스케줄러 | 순수 Node.js (`setTimeout` / `setInterval`) |
 | 보안 | bcrypt (PIN 해싱) |
 
 ---
@@ -88,10 +88,19 @@ routinemon/
 
 ### 파티 퀘스트
 - 하루 4회 발생 (01시 / 07시 / 13시 / 19시)
-- 플레이어 1명이 YES 수락 → 전원이 제한 시간 **2시간** 내 사진 업로드 시 완료
+- 각 시간대에 퀘스트가 발생하면 **2시간 30분 내** (ex: 01시 발생 → 03:30까지) 방의 누군가가 YES로 수락해야 함
+  - 수락하지 않으면 해당 시간대 퀘스트는 자동 만료 (status: `failed`)
+- 수락 즉시 **2시간 타이머 시작** → 제한 시간 내 전원이 사진 업로드 시 완료
+  - 타이머는 수락한 시각 기준이므로 최대 만료 시각 = 수락 시각 + 2시간
 - 완료 보상: **EXP +5%** + 낮은 확률로 랜덤 스킨 1개
-- 퀘스트 내용 예시: "빨간 지붕을 찍어라!", "브이를 하고 셀카를 찍으세요!"
-- 업로드된 사진은 **Claude Vision API(Haiku)** 가 퀘스트 내용과 일치하는지 판별 (통과 시 기여 처리, 실패 시 재업로드 요청)
+- 하루 최대 4개 퀘스트 발생 → 업로드 화면 파티 영역 dot 4개로 표시
+  - dot 인덱스: 01시→0 / 07시→1 / 13시→2 / 19시→3
+  - 전원 완료 시 해당 dot: `#F287FB` (분홍)
+  - 활성화된 시간대 dot: `#B39EFF` (보라, 선택 상태)
+  - 미발생 또는 만료된 시간대 dot: `#ffffff` (흰색)
+- 전원 완료 이후에는 사진 삭제 불가 (잠금)
+- 퀘스트 내용 예시: "하늘을 담아라!", "손가락 브이로 셀카를 찍어라!", "화분이나 나무를 찍어라!", "지금 신은 신발을 찍어라!", "창밖 풍경을 찍어라!", "오늘 먹은 음식을 찍어라!", "책 또는 노트를 펴고 찍어라!", "손바닥을 카메라에 보여라!", "그림자가 보이도록 찍어라!", "텍스트가 있는 물체를 찍어라!"
+- 업로드된 사진은 **Claude Vision API(Haiku)** 가 퀘스트 내용과 일치하는지 동기 판별 (통과 시 기여 처리, 실패 시 재업로드 요청)
 
 ### 기여도 순위
 플레이어 방 슬롯에 기여도 1~3위를 표시합니다.
@@ -167,6 +176,50 @@ EGG(알) → BABY(아기) → CHILD(어린이) → ADULT(어른이)
 
 - 업로드 사진 및 기록은 **최대 3일** 보존
 - 매일 자정 3일 이전 데이터 자동 삭제
+
+---
+
+## 🚀 시작하기
+
+### 사전 준비
+
+- Node.js 18+
+- MySQL 8.0+
+- Anthropic API Key (Claude Vision 사용)
+
+### 환경 변수 설정
+
+`server/` 폴더에 `.env` 파일을 생성하세요.
+
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=routinemon
+ANTHROPIC_API_KEY=your_anthropic_api_key
+PORT=4000
+```
+
+### 클라이언트 실행
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+> 기본 주소: `http://localhost:5173`
+
+### 서버 실행
+
+```bash
+cd server
+npm install
+npm start
+```
+
+> 기본 포트: `4000`  
+> 개발 중 자동 재시작: `npm run dev` (nodemon)
 
 ---
 

@@ -1,0 +1,946 @@
+@font-face {
+  font-family: 'GalmuriMono9';
+  src: url('/assets/fonts/GalmuriMono9.woff2') format('woff2'),
+       url('/assets/fonts/GalmuriMono9.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: initial !important;
+}
+
+.uploadscreen-page {
+  width: 100vw;
+  min-height: 100vh;
+  background: #111219;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-x: hidden;
+  font-family: 'GalmuriMono9', monospace;
+}
+
+/* CUSTOM / DEX와 같은 모바일 화면 크기 */
+.uploadscreen-board {
+  position: relative;
+  width: 430px;
+  min-height: 760px;
+  background:
+    linear-gradient(rgba(4, 6, 40, 0.1), rgba(4, 6, 40, 0.1)),
+    url('/assets/backgroundImage/background.png');
+  background-size: cover;
+  background-position: center;
+  padding: 28px 28px 38px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.uploadscreen-board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(#ffffff 1px, transparent 1px),
+    radial-gradient(#d8caff 1px, transparent 1px);
+  background-size: 38px 38px, 61px 61px;
+  background-position: 4px 12px, 22px 32px;
+  opacity: 0.45;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.uploadscreen-header,
+.uploadscreen-top-buttons,
+.uploadscreen-dots-row,
+.uploadscreen-player-list,
+.uploadscreen-popup-backdrop {
+  position: relative;
+  z-index: 2;
+}
+
+/* 상단: 피그마 위치 */
+.uploadscreen-header {
+  height: 112px;
+  position: relative;
+}
+
+.uploadscreen-logo-area {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.uploadscreen-logo {
+  width: 188px;
+  image-rendering: pixelated;
+}
+
+.uploadscreen-logo-sub {
+  width: 130px;
+  margin-top: -2px;
+  margin-left: 34px;
+  image-rendering: pixelated;
+}
+
+.uploadscreen-question-btn,
+.uploadscreen-back-btn,
+.uploadscreen-home-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  position: absolute;
+}
+
+.uploadscreen-question-btn {
+  top: 5px;
+  left: 190px;
+  width: 34px;
+  height: 34px;
+}
+
+.uploadscreen-question-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.uploadscreen-back-btn {
+  top: 0;
+  right: 60px;
+  width: 52px;
+  height: 52px;
+}
+
+.uploadscreen-home-btn {
+  top: -4px;
+  right: 0;
+  width: 58px;
+  height: 58px;
+}
+
+.uploadscreen-back-btn img,
+.uploadscreen-home-btn img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* 상단 버튼 */
+.uploadscreen-top-buttons {
+  display: grid;
+  grid-template-columns: 128px 88px 88px;
+  column-gap: 24px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  margin-top: -20px;
+}
+
+.uploadscreen-create-btn,
+.uploadscreen-daily-btn,
+.uploadscreen-party-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.uploadscreen-party-btn:disabled {
+  cursor: default;
+}
+
+.uploadscreen-create-btn {
+  width: 128px;
+  height: 45px;
+}
+
+.uploadscreen-daily-btn {
+  width: 88px;
+  height: 31px;
+}
+
+.uploadscreen-party-btn {
+  width: 88px;
+  height: 32px;
+}
+
+.uploadscreen-create-btn img,
+.uploadscreen-daily-btn img,
+.uploadscreen-party-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* 점 */
+.uploadscreen-dots-row {
+  display: grid;
+  grid-template-columns: 128px 88px 88px;
+  column-gap: 24px;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.uploadscreen-dots {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+}
+
+.uploadscreen-dot-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.uploadscreen-dots i {
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: block;
+}
+
+.uploadscreen-dots i.active {
+  background: #b9a0ff;
+}
+
+/* 플레이어 리스트 */
+.uploadscreen-player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.uploadscreen-player-row {
+  display: grid;
+  grid-template-columns: 128px 88px 88px;
+  column-gap: 24px;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploadscreen-player-info {
+  position: relative;
+  height: 92px;
+}
+
+.uploadscreen-player-img {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  position: absolute;
+  left: -20px;
+  top: -10px;
+  animation: upload-player-idle 3.5s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes upload-player-idle {
+  0%   { transform: translateY(0)    rotate(-1deg); }
+  30%  { transform: translateY(-5px) rotate(0deg);  }
+  60%  { transform: translateY(-7px) rotate(1deg);  }
+  100% { transform: translateY(0)    rotate(-1deg); }
+}
+
+.uploadscreen-player-name {
+  position: absolute;
+  left:30%;
+  transform: translateX(-50%);
+  top: 92px;
+  font-size: 13px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.uploadscreen-speech-wrap {
+  position: absolute;
+  left: 70px;
+  top: -2px;
+  width: 78px;
+  height: 42px;
+}
+
+.uploadscreen-speech-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.uploadscreen-speech-wrap span {
+  position: absolute;
+  inset: 0;
+  color: #4a32c8;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 5px;
+}
+
+/* 업로드 칸 */
+.uploadscreen-upload-slot,
+.uploadscreen-party-slot {
+  width: 88px;
+  height: 92px;
+  background: #ffffff;
+  border: 4px solid #7654d9;
+  position: relative;
+  cursor: default;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* 내 칸(button)만 pointer 커서 */
+button.uploadscreen-upload-slot {
+  cursor: pointer;
+}
+
+.uploadscreen-party-slot {
+  background: #b7b7b7;
+  cursor: default;
+}
+
+.uploadscreen-white {
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.uploadscreen-blue {
+  border-color: #14e8ff;
+  color: #14e8ff;
+}
+
+.uploadscreen-green {
+  border-color: #00e78c;
+  color: #00e78c;
+}
+
+.uploadscreen-yellow {
+  border-color: #fff700;
+  color: #fff700;
+}
+
+.uploadscreen-red {
+  border-color: #ff1b14;
+  color: #ff1b14;
+}
+
+.uploadscreen-add-icon {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.uploadscreen-uploaded-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.uploadscreen-upload-time {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  color: #ffffff;
+  text-shadow:
+    1px 1px 0 #4d27ff,
+    -1px 1px 0 #4d27ff,
+    1px -1px 0 #4d27ff,
+    -1px -1px 0 #4d27ff;
+  font-size: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.uploadscreen-star {
+  position: absolute;
+  right: 3px;
+  bottom: 0;
+  color: #18fff4;
+  font-size: 22px;
+}
+
+.uploadscreen-star-btn {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.uploadscreen-star-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* 팝업 */
+.uploadscreen-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.uploadscreen-daily-popup {
+  width: 350px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: rgba(45, 20, 100, 0.95);
+  border: 3px solid #8f6cff;
+  padding: 20px 18px 24px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.uploadscreen-upload-popup {
+  width: 300px;
+  background: rgba(168, 245, 188, 0.96);
+  padding: 14px 16px;
+  box-sizing: border-box;
+  color: #180e2b;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* AI 판별 오버레이 */
+.uploadscreen-validation-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(24, 14, 43, 0.92);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.uploadscreen-validation-checking,
+.uploadscreen-validation-approved,
+.uploadscreen-validation-rejected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #ffffff;
+  font-family: 'GalmuriMono9', monospace;
+  text-align: center;
+  padding: 0 24px;
+}
+
+
+.uploadscreen-validation-checking p,
+.uploadscreen-validation-approved p,
+.uploadscreen-validation-rejected p {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.uploadscreen-validation-approved p { color: #7dffb3; }
+.uploadscreen-validation-rejected p { color: #ff8080; }
+
+/* 픽셀 도트 스피너 */
+.uploadscreen-pixel-spinner {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.uploadscreen-pixel-spinner-dot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: #F287FB;
+  top: 50%;
+  left: 50%;
+  animation: pixel-dot-fade 0.9s infinite ease-in-out;
+}
+
+.uploadscreen-pixel-spinner-dot:nth-child(1) { transform: translate(-50%, -50%) rotate(  0deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(2) { transform: translate(-50%, -50%) rotate( 45deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(3) { transform: translate(-50%, -50%) rotate( 90deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(4) { transform: translate(-50%, -50%) rotate(135deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(5) { transform: translate(-50%, -50%) rotate(180deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(6) { transform: translate(-50%, -50%) rotate(225deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(7) { transform: translate(-50%, -50%) rotate(270deg) translateY(-24px); }
+.uploadscreen-pixel-spinner-dot:nth-child(8) { transform: translate(-50%, -50%) rotate(315deg) translateY(-24px); }
+
+@keyframes pixel-dot-fade {
+  0%, 100% { opacity: 0.12; }
+  50%       { opacity: 1; box-shadow: 0 0 6px #F287FB; }
+}
+
+.uploadscreen-retry-btn {
+  margin-top: 8px;
+  background: #7654d9;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.uploadscreen-daily-popup h2 {
+  font-size: 16px;
+  color: #d4b8ff;
+  margin: 0 0 18px;
+  letter-spacing: 1px;
+}
+
+.uploadscreen-upload-popup h2 {
+  font-size: 15px;
+  color: #4a32c8;
+  margin: 0 0 16px;
+}
+
+.uploadscreen-daily-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.uploadscreen-daily-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(179, 158, 255, 0.3);
+  padding: 10px 14px;
+  box-sizing: border-box;
+}
+
+.uploadscreen-daily-name {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.uploadscreen-daily-name.uploadscreen-white { color: #ffffff; }
+.uploadscreen-daily-name.uploadscreen-blue  { color: #14e8ff; }
+.uploadscreen-daily-name.uploadscreen-green { color: #00e78c; }
+.uploadscreen-daily-name.uploadscreen-yellow{ color: #fff700; }
+.uploadscreen-daily-name.uploadscreen-red   { color: #ff8080; }
+
+.uploadscreen-daily-routines {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+
+.uploadscreen-daily-routine-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #e8e0ff;
+  text-align: left;
+}
+
+.uploadscreen-daily-emoji {
+  font-size: 16px;
+  min-width: 22px;
+  text-align: center;
+}
+
+.uploadscreen-popup-yes-btn {
+  margin-top: 18px;
+  width: 52px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.uploadscreen-popup-yes-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* ── Party Info 팝업 ─────────────────────────────────── */
+.uploadscreen-party-info-popup {
+  width: 320px;
+  background: rgba(45, 20, 100, 0.96);
+  border: 3px solid #8f6cff;
+  padding: 24px 20px 28px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.uploadscreen-party-info-popup h2 {
+  font-size: 16px;
+  color: #d4b8ff;
+  margin: 0 0 16px;
+  letter-spacing: 1px;
+}
+
+.uploadscreen-party-quest-text {
+  font-size: 14px;
+  color: #ffffff;
+  margin: 0 0 18px;
+  line-height: 1.6;
+}
+
+@keyframes timelimit-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+
+.uploadscreen-party-timelimit {
+  font-size: 13px;
+  color: #efff00;
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+}
+
+/* 30분 이하 */
+.uploadscreen-party-timelimit.time-warn {
+  color: #FF0077;
+}
+
+/* 10분 이하 — 깜빡임 */
+.uploadscreen-party-timelimit.time-critical {
+  color: #FF0077;
+  animation: timelimit-blink 1s ease-in-out infinite;
+}
+
+.uploadscreen-party-quest-hint {
+  font-size: 12px;
+  color: #4a32c8;
+  margin: 0 0 12px;
+  padding: 6px 10px;
+  background: rgba(179, 158, 255, 0.3);
+  border: 1px solid #8f6cff;
+}
+
+.uploadscreen-routine-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.uploadscreen-routine-select-btn {
+  height: 46px;
+  border: 0px solid #d78cff;
+  background: #df82e9;
+  color: white;
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  column-gap: 8px;
+  align-items: center;
+  font-family: 'GalmuriMono9', monospace;
+  cursor: pointer;
+}
+
+.uploadscreen-routine-select-btn p {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  text-align: left;
+}
+
+.uploadscreen-routine-select-btn span {
+  font-size: 16px;
+}
+
+.uploadscreen-routine-selected {
+  background: #4800ff;
+  border-color: #ffffff;
+}
+
+/* 이미 업로드된 루틴 — 비활성화 상태 */
+.uploadscreen-routine-done {
+  background: rgba(180, 180, 180, 0.35);
+  border-color: rgba(180, 180, 180, 0.4);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.uploadscreen-file-label {
+  display: inline-flex;
+  width: 112px;
+  height: 28px;
+  justify-content: center;
+  align-items: center;
+  background: #f2eaff;
+  border: 2px solid #8f6cff;
+  color: #180e2b;
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.uploadscreen-file-label input {
+  display: none;
+}
+
+.uploadscreen-preview-box {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 12px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid #8f6cff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 9px;
+}
+
+.uploadscreen-preview-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.uploadscreen-upload-btn {
+  width: 88px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.uploadscreen-upload-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.uploadscreen-popup-actions {
+  display: flex;
+  justify-content: center;
+  gap: 35px;
+}
+
+.uploadscreen-popup-actions button {
+  width: 52px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.uploadscreen-btn-disabled {
+  opacity: 0.35;
+  cursor: default !important;
+}
+
+.uploadscreen-popup-actions img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.uploadscreen-delete-popup {
+  width: 280px;
+  background: rgba(179, 158, 255, 0.8);
+  padding: 48px 20px 35px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.uploadscreen-delete-popup h2 {
+  font-family: 'GalmuriMono9', monospace;
+  font-size: 14px;
+  color: #4800FF;
+  margin: 0 0 20px;
+}
+
+/* ── 도움말 팝업 ────────────────────────────────────────────── */
+.uploadscreen-help-popup {
+  width: 340px;
+  max-height: 82vh;
+  overflow-y: auto;
+  background: rgba(30, 14, 72, 0.97);
+  border: 3px solid #8f6cff;
+  padding: 24px 22px 20px;
+  box-sizing: border-box;
+}
+
+.uploadscreen-help-title {
+  font-size: 15px;
+  color: #d4b8ff;
+  margin: 0 0 18px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.uploadscreen-help-section {
+  margin-bottom: 4px;
+}
+
+.uploadscreen-help-section-title {
+  font-size: 13px;
+  color: #c4a8ff;
+  margin: 0 0 6px;
+  font-weight: bold;
+}
+
+.uploadscreen-help-desc {
+  font-size: 11px;
+  color: #e0d4ff;
+  margin: 0;
+  line-height: 1.9;
+}
+
+.uploadscreen-help-accent {
+  color: #18fff4;
+  font-weight: bold;
+}
+
+.uploadscreen-help-warn {
+  color: #FF0077;
+  font-weight: bold;
+}
+
+.uploadscreen-help-divider {
+  height: 1px;
+  background: rgba(179, 158, 255, 0.25);
+  margin: 12px 0;
+}
+
+.uploadscreen-help-dots {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.uploadscreen-help-dot-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #e0d4ff;
+}
+
+/* ── 퀘스트 완료 성공 오버레이 ──────────────────────────────────── */
+.uploadscreen-success-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.uploadscreen-success-img {
+  width: 260px;
+  image-rendering: pixelated;
+  animation:
+    success-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    success-fadeout 0.6s ease-in 2.2s forwards;
+}
+
+.uploadscreen-sparkle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: sparkle-burst 0.8s ease-out 0.1s forwards;
+  opacity: 0;
+}
+
+.uploadscreen-sparkle-0 { background: #FFD700; --dx: 0px;    --dy: -90px; }
+.uploadscreen-sparkle-1 { background: #FF6B6B; --dx: 64px;   --dy: -64px; }
+.uploadscreen-sparkle-2 { background: #18fff4; --dx: 90px;   --dy: 0px;   }
+.uploadscreen-sparkle-3 { background: #FF6B6B; --dx: 64px;   --dy: 64px;  }
+.uploadscreen-sparkle-4 { background: #FFD700; --dx: 0px;    --dy: 90px;  }
+.uploadscreen-sparkle-5 { background: #c084fc; --dx: -64px;  --dy: 64px;  }
+.uploadscreen-sparkle-6 { background: #18fff4; --dx: -90px;  --dy: 0px;   }
+.uploadscreen-sparkle-7 { background: #c084fc; --dx: -64px;  --dy: -64px; }
+
+@keyframes success-pop {
+  0%   { transform: scale(0) rotate(-8deg); opacity: 0; }
+  60%  { transform: scale(1.25) rotate(4deg); opacity: 1; }
+  80%  { transform: scale(0.92) rotate(-2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes success-fadeout {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+@keyframes sparkle-burst {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  80%  { opacity: 0.8; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+}
+
+.uploadscreen-help-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.uploadscreen-help-ok-btn {
+  display: block;
+  margin: 20px auto 0;
+  width: 78px;
+  height: 39px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.uploadscreen-help-ok-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}

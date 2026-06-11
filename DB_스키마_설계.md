@@ -66,7 +66,7 @@ CREATE TABLE players (
   slot_number     TINYINT       NOT NULL,             -- 1~5 (플레이어 슬롯 번호)
   nickname        VARCHAR(7)    DEFAULT 'Unknown',
   pin_hash        VARCHAR(255)  DEFAULT NULL,         -- bcrypt 해시, 닉네임 설정 시 함께 등록
-  is_host         BOOLEAN       DEFAULT FALSE,        -- 방을 신설한 플레이어 여부
+  character_type  VARCHAR(10)   NOT NULL DEFAULT 'white', -- 캐릭터 색상 (white/green/blue/yellow/red)
   current_skin_id INT           DEFAULT NULL,         -- 현재 적용 스킨 (NULL = 기본)
   created_at      DATETIME      DEFAULT CURRENT_TIMESTAMP,
 
@@ -83,7 +83,7 @@ CREATE TABLE players (
 | slot_number | TINYINT | 방 안의 플레이어 슬롯 번호 (1~5) |
 | nickname | VARCHAR(7) | 기본값 'Unknown', 입장 시 설정 (한글/영문/숫자, 최대 7자) |
 | pin_hash | VARCHAR(255) | bcrypt 해시, 닉네임 설정 시 함께 등록. 이후 재입장 시 PIN 검증에 사용 |
-| is_host | BOOLEAN | 방을 신설한 플레이어이면 TRUE. 홈 버튼 클릭 시 팝업 여부 분기에 사용 |
+| character_type | VARCHAR(10) | 캐릭터 색상. `white` / `green` / `blue` / `yellow` / `red`. PATCH로 변경 가능 |
 | current_skin_id | INT | FK → skins, 현재 적용 중인 스킨 |
 
 > **Note:** 방이 삭제되면 players도 CASCADE 삭제됨
@@ -123,7 +123,7 @@ CREATE TABLE daily_uploads (
   id          INT           AUTO_INCREMENT PRIMARY KEY,
   player_id   INT           NOT NULL,
   routine_id  INT           NOT NULL,
-  image_url   VARCHAR(500)  NOT NULL,    -- Cloudinary URL
+  image_url   VARCHAR(500)  NOT NULL,    -- 로컬 서버 URL (ex. /uploads/daily/filename.jpg)
   upload_date DATE          NOT NULL,    -- 업로드 날짜 (자정 초기화 기준)
   created_at  DATETIME      DEFAULT CURRENT_TIMESTAMP,
 
@@ -137,7 +137,7 @@ CREATE TABLE daily_uploads (
 | id | INT | PK |
 | player_id | INT | FK → players |
 | routine_id | INT | FK → routines (어떤 루틴의 사진인지) |
-| image_url | VARCHAR(500) | Cloudinary 이미지 URL |
+| image_url | VARCHAR(500) | 로컬 서버 이미지 URL (ex. `/uploads/daily/filename.jpg`) |
 | upload_date | DATE | 업로드 날짜 (자정 초기화 및 3일 보존 기준) |
 
 > **일일 퀘스트 진행도 계산 방식**
@@ -163,11 +163,19 @@ CREATE TABLE party_quest_definitions (
 | content | VARCHAR(100) | 퀘스트 내용 텍스트 |
 | is_active | BOOLEAN | 활성화 여부 (관리용) |
 
-> **초기 데이터 예시**
-> - "빨간 지붕을 찍어라!"
-> - "바깥의 노란 간판을 찍어라!"
-> - "긴급 물마시기! 물컵을 찍으세요!"
-> - "브이를 하고 셀카를 찍으세요!"
+> **초기 데이터 (AI Vision 판별 최적화 10개)**
+> 1. "하늘을 담아라!"
+> 2. "손가락 브이로 셀카를 찍어라!"
+> 3. "화분이나 나무를 찍어라!"
+> 4. "지금 신은 신발을 찍어라!"
+> 5. "창밖 풍경을 찍어라!"
+> 6. "오늘 먹은 음식을 찍어라!"
+> 7. "책 또는 노트를 펴고 찍어라!"
+> 8. "손바닥을 카메라에 보여라!"
+> 9. "그림자가 보이도록 찍어라!"
+> 10. "텍스트가 있는 물체를 찍어라!"
+>
+> 서버 초기 시드는 `INSERT INTO ... ON DUPLICATE KEY UPDATE` 방식으로 중복 없이 삽입
 
 ---
 
@@ -258,7 +266,7 @@ CREATE TABLE mons (
   id                              INT             AUTO_INCREMENT PRIMARY KEY,
   room_id                         INT             NOT NULL UNIQUE,   -- 방당 Mon 1마리
   catalog_id                      INT             DEFAULT NULL,      -- NULL = 알 단계 (종류 미공개)
-  stage                           ENUM('egg', 'baby', 'child', 'adult') DEFAULT 'egg',
+  stage                           ENUM('EGG', 'BABY', 'CHILD', 'ADULT') DEFAULT 'EGG',
   level                           TINYINT         DEFAULT 1,         -- 각 단계 내 레벨 (1 or 2)
   exp_percentage                  DECIMAL(5,2)    DEFAULT 0.00,      -- 0.00 ~ 100.00
   last_quest_completed_date       DATE            DEFAULT NULL,      -- 마지막 일일 퀘스트 완료 날짜 (패널티/상태 계산용)
@@ -273,7 +281,7 @@ CREATE TABLE mons (
 | 컬럼 | 타입 | 설명 |
 |------|------|------|
 | catalog_id | INT | 알 단계에서는 NULL, 아기 단계 전환 시 확률로 배정 |
-| stage | ENUM | egg → baby → child → adult |
+| stage | ENUM | EGG → BABY → CHILD → ADULT |
 | level | TINYINT | 단계 내 레벨 1 or 2 |
 | exp_percentage | DECIMAL | 현재 레벨 내 EXP %, 패널티로 0.00 아래로 내려가지 않음 |
 | last_quest_completed_date | DATE | 방 전체 기준 마지막 일일 퀘스트 완료 날짜. 오늘 날짜와 차이로 미진행 일수 계산 |
@@ -336,13 +344,17 @@ CREATE TABLE exp_logs (
 
 ---
 
-## 스케줄러 작업 목록 (node-cron)
+## 스케줄러 작업 목록 (순수 Node.js)
+
+> `setTimeout` / `setInterval` 기반 자체 스케줄러 (`partyQuestCron.js`)  
+> `scheduleDaily(hour, fn, minute = 0)` 헬퍼로 매일 특정 시:분에 반복 실행
 
 | 작업 | 실행 주기 | 내용 |
 |------|----------|------|
 | 일일 퀘스트 초기화 | 매일 00:00 | 당일 진행도는 daily_uploads 쿼리로 계산하므로 별도 초기화 불필요 |
-| 파티 퀘스트 생성 | 매일 01:00 / 07:00 / 13:00 / 19:00 | 모든 active 방에 party_quests 레코드 생성 |
-| 파티 퀘스트 만료 처리 | 매 5분 | expires_at 지난 active 퀘스트 → status = 'failed' |
+| 파티 퀘스트 생성 | 매일 01:00 / 07:00 / 13:00 / 19:00 | 모든 active 방에 party_quests 레코드 생성, `party-quest:new` 소켓 이벤트 emit |
+| 파티 퀘스트 수락 마감 | 매일 03:30 / 09:30 / 15:30 / 21:30 | pending 상태 퀘스트 → status = `failed`, `party-quest:failed` 소켓 이벤트 emit |
+| 파티 퀘스트 진행 만료 | 실시간 (수락 후 +2시간) | active 상태에서 expires_at 초과 시 → status = `failed` |
 | 오래된 데이터 삭제 | 매일 00:00 | upload_date < 오늘-3일인 daily_uploads 삭제 |
 | 비활성 방 자동 삭제 | 매 10분 | 생성 후 10분 이상 플레이어가 0명인 방 삭제 |
 
