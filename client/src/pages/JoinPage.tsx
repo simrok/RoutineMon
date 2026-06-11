@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useBgm } from '../context/BgmContext'
 import './JoinPage.css'
 
 const API_BASE = 'http://localhost:4000/api'
@@ -20,6 +21,7 @@ type SlotInfo = {
 export default function JoinPage() {
   const navigate = useNavigate()
   const { roomCode } = useParams<{ roomCode: string }>()
+  const { muted, setMuted } = useBgm()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -63,6 +65,11 @@ export default function JoinPage() {
           <img className="joinpage-logo" src="/assets/logo/6.png" alt="RoutineMon" />
           <img className="joinpage-logo-sub" src="/assets/logo/low.png" alt="subtitle" />
         </div>
+
+        {/* 스피커 버튼 */}
+        <button className="joinpage-speaker-btn" onClick={() => setMuted(!muted)}>
+          <img src={muted ? '/assets/button/speaker2.png' : '/assets/button/speaker1.png'} alt="speaker" />
+        </button>
 
         {/* 홈 버튼 */}
         <button className="joinpage-home-btn" onClick={() => navigate('/')}>

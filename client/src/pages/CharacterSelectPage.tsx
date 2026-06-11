@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
 import ConfirmPopup from '../components/ConfirmPopup'
 import { getRoom } from '../api/rooms'
+import { useBgm } from '../context/BgmContext'
 import './CharacterSelectPage.css'
 
 export default function CharacterSelectPage() {
@@ -12,7 +13,7 @@ export default function CharacterSelectPage() {
   // roomCode가 없으면 방 신설 중, 있으면 방 참가 중
   const isCreating = !roomCode
 
-  const { room, setRoom, myPlayer, playerColors, pendingMaxPlayers } = useRoomStore()
+  const { room, setRoom, myPlayer, playerColors, pendingMaxPlayers, setPlayerColor } = useRoomStore()
 
   // 방 신설 흐름: 이미 방에 입장한 상태면 기존 방으로 리다이렉트 (뒤로가기 방지)
   useEffect(() => {
@@ -35,6 +36,10 @@ export default function CharacterSelectPage() {
           createdAt: new Date().toISOString(),
           players: data.players,
         })
+        // 실제 characterType으로 playerColors 업데이트
+        data.players.forEach((p: { slotNumber: number; characterType?: string }) => {
+          if (p.characterType) setPlayerColor(p.slotNumber, p.characterType)
+        })
       })
       .catch(err => console.error('방 정보 갱신 실패:', err))
   }, [roomCode])
@@ -44,6 +49,8 @@ export default function CharacterSelectPage() {
 
   // 참가 모드에서 isActive 결정 기준도 maxPlayers로 통일
 
+
+  const { muted, setMuted } = useBgm()
 
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null)
   const [startHover, setStartHover] = useState(false)
@@ -74,6 +81,11 @@ export default function CharacterSelectPage() {
 
   return (
     <div className="charselect-container">
+
+      {/* 스피커 버튼 */}
+      <button className="speaker-btn" onClick={() => setMuted(!muted)}>
+        <img src={muted ? '/assets/button/speaker2.png' : '/assets/button/speaker1.png'} alt="speaker" />
+      </button>
 
       {/* 홈 버튼 */}
       <button
@@ -122,7 +134,7 @@ export default function CharacterSelectPage() {
 
                 {/* 캐릭터 */}
                 <img
-                  className="character-img"
+                  className={`character-img${isSelected ? ' floating' : ''}`}
                   src={`/assets/player/player_${color}.png`}
                   alt={`player${slot}`}
                 />

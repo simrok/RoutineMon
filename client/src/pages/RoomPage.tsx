@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
 import { getSocket, joinRoom, leaveRoom } from '../socket'
+import { useBgm } from '../context/BgmContext'
 import './RoomPage.css'
 
 type PartyState = 'none' | 'pending' | 'active'
@@ -125,10 +126,11 @@ export default function RoomPage() {
   const { roomCode } = useParams<{ roomCode: string }>()
 
   // ====================
-  // STORE
+  // STORE / BGM
   // ====================
   const myPlayer = useRoomStore((s) => s.myPlayer)
   const myPlayerId = myPlayer?.playerId ?? 0
+  const { muted, volume, setMuted, setVolume } = useBgm()
 
   // ====================
   // STATE
@@ -260,25 +262,26 @@ export default function RoomPage() {
       const activeJson = await activeRes.json()
       if (activeJson.success && activeJson.data) {
         const q = activeJson.data
-        // 이미 완료된 퀘스트는 RoomPage에서 비활성화 상태로 처리
         if (q.status === 'completed') {
+          // 완료된 퀘스트가 있어도 return 하지 않고 pending 퀘스트 체크로 이어짐
+          // (이전 시간대 completed가 새 시간대 pending을 가리는 버그 방지)
           setPartyState('none')
           setActiveQuestInfo(null)
-          return
-        }
-        const secs = getSecondsUntil(q.expiresAt)
-        if (secs > 0) {
-          setActiveQuestInfo({
-            partyQuestId: q.partyQuestId,
-            content: q.content,
-            scheduledHour: q.scheduledHour,
-            expiresAt: q.expiresAt,
-            dotIndex: HOUR_TO_DOT[q.scheduledHour] ?? 0,
-          })
-          setTimeLeft(secs)
-          setPartyState('active')
-          setPartyUploadCount((q.uploads ?? []).length)
-          return
+        } else {
+          const secs = getSecondsUntil(q.expiresAt)
+          if (secs > 0) {
+            setActiveQuestInfo({
+              partyQuestId: q.partyQuestId,
+              content: q.content,
+              scheduledHour: q.scheduledHour,
+              expiresAt: q.expiresAt,
+              dotIndex: HOUR_TO_DOT[q.scheduledHour] ?? 0,
+            })
+            setTimeLeft(secs)
+            setPartyState('active')
+            setPartyUploadCount((q.uploads ?? []).length)
+            return
+          }
         }
       }
       // 2. 대기 중인 퀘스트 확인
@@ -304,6 +307,7 @@ export default function RoomPage() {
       console.error('파티 퀘스트 상태 조회 실패:', err)
     }
   }
+
 
   useEffect(() => {
     fetchMon()
@@ -448,11 +452,12 @@ export default function RoomPage() {
     if ((monData?.expPercentage ?? 0) >= 80) return '>o<'
     // 우선순위 4: 오늘 전원 완료
     if (monFaceData.todayAllCompleted) return 'O o O'
-    // 우선순위 5~7: 미진행 일수
+    // 우선순위 5~8: 미진행 일수
     const inactive = monFaceData.inactiveDays
     if (inactive >= 6) return 'x _ x'
     if (inactive >= 2) return 'Zz'
-    return 'o _ o'
+    if (inactive >= 1) return 'o _ o'
+    return 'o(^▽^)o'
   }
 
   const mon = {
@@ -879,6 +884,38 @@ export default function RoomPage() {
 
               <div className="roompage-settings-divider" />
 
+              {/* BGM 설정 */}
+              <div className="roompage-settings-section">
+                <p className="roompage-settings-label">BGM</p>
+                <div className="roompage-settings-bgm-row">
+                  <button
+                    className="roompage-settings-bgm-btn"
+                    onClick={() => setMuted(!muted)}
+                  >
+                    <img
+                      src={muted ? '/assets/button/speaker2.png' : '/assets/button/speaker1.png'}
+                      alt="speaker"
+                    />
+                  </button>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={muted ? 0 : volume}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value)
+                      setVolume(v)
+                      if (v > 0 && muted) setMuted(false)
+                      if (v === 0) setMuted(true)
+                    }}
+                    className="roompage-settings-volume-slider"
+                  />
+                </div>
+              </div>
+
+              <div className="roompage-settings-divider" />
+
               {/* 방 탈퇴 */}
               {!showLeaveConfirm ? (
                 <button
@@ -970,6 +1007,7 @@ export default function RoomPage() {
                   <span className="mon-info-face">^o^  ★</span> 3일 이상 연속 일일 퀘스트 완료<br />
                   <span className="mon-info-face">&gt;o&lt;</span> EXP 80% 이상 (진화 임박)<br />
                   <span className="mon-info-face">O o O</span> 오늘 일일 퀘스트 완료<br />
+                  <span className="mon-info-face">o(^▽^)o</span> 기본 상태<br />
                   <span className="mon-info-face">o _ o</span> 1일 미진행 (경고)<br />
                   <span className="mon-info-face">Zz</span> 2~5일 미진행 (EXP -5% / 일)<br />
                   <span className="mon-info-face">x _ x</span> 6일 이상 미진행 (EXP -10% / 일)

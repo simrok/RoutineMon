@@ -39,6 +39,25 @@
   image-rendering: pixelated;
 }
 
+/* 스피커 버튼 */
+.routine-setup-container .speaker-btn {
+  position: absolute;
+  top: 20px;
+  right: 64px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.routine-setup-container .speaker-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 /* 홈 버튼 */
 .routine-setup-container .home-btn {
   position: absolute;
@@ -94,7 +113,7 @@
 .routine-setup-title {
   font-family: 'GalmuriMono9', monospace;
   color: #00FFFF;
-  font-size: 17px;
+  font-size: 18px;
   text-align: center;
   margin: 0;
   margin-top: 6px;
@@ -103,7 +122,7 @@
 .routine-setup-sub {
   font-family: 'GalmuriMono9', monospace;
   color: #00FFAA;
-  font-size: 12px;
+  font-size: 11px;
   text-align: center;
   margin: 0;
   margin-top: -6px;
@@ -171,7 +190,6 @@
 }
 
 .routine-emoji-btn {
-  position: relative;
   width: 48px;
   height: 48px;
   background: none;
@@ -184,27 +202,16 @@
 }
 
 .routine-emoji-btn img {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: fill;
+  object-fit: contain;
+  image-rendering: pixelated;
 }
 
-.routine-emoji-btn span {
-  position: relative;
-  z-index: 1;
-  font-size: 20px;
+/* 선택된 이모지 표시 */
+.routine-emoji-selected {
+  font-size: 26px;
   line-height: 1;
-  /* + 기호는 픽셀 폰트로 */
-  font-family: 'GalmuriMono9', monospace;
-  color: #999999;
-}
-
-/* 이모지가 선택됐을 때 span (이모지는 시스템 폰트) */
-.routine-emoji-btn span:not(:empty) {
-  font-family: inherit;
-  color: inherit;
 }
 
 /* ─── 이모지 팝업 ─── */
