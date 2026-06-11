@@ -73,16 +73,14 @@ exports.registerPlayer = async (req, res) => {
 
     const room = roomRows[0];
 
-    // 슬롯 범위 검증
-    if (
-      Number(slotNumber) < 1 ||
-      Number(slotNumber) > room.max_players
-    ) {
+    // 슬롯 범위 검증 (최대 5슬롯 고정)
+    const MAX_SLOTS = 5;
+    if (Number(slotNumber) < 1 || Number(slotNumber) > MAX_SLOTS) {
       await connection.rollback();
 
       return res.status(400).json({
         success: false,
-        error: `슬롯 번호는 1~${room.max_players} 사이여야 합니다.`
+        error: `슬롯 번호는 1~${MAX_SLOTS} 사이여야 합니다.`
       });
     }
 
@@ -104,6 +102,14 @@ exports.registerPlayer = async (req, res) => {
         success: false,
         error: '해당 슬롯이 이미 사용 중입니다.'
       });
+    }
+
+    // max_players가 현재 슬롯보다 작으면 확장
+    if (Number(slotNumber) > room.max_players) {
+      await connection.query(
+        'UPDATE rooms SET max_players = ? WHERE id = ?',
+        [Number(slotNumber), room.id]
+      );
     }
 
     // PIN 해싱
@@ -385,7 +391,8 @@ exports.updatePlayer = async (req, res) => {
     const { playerId } = req.params;
     const {
       nickname,
-      currentSkinId
+      currentSkinId,
+      characterType,
     } = req.body;
 
     const pinHeader =
@@ -444,6 +451,16 @@ exports.updatePlayer = async (req, res) => {
 
       updateFields.push('nickname = ?');
       queryParams.push(nickname);
+    }
+
+    // character_type 수정
+    if (characterType !== undefined) {
+      const validTypes = ['white', 'green', 'blue', 'yellow', 'red'];
+      if (!validTypes.includes(characterType)) {
+        return res.status(400).json({ success: false, error: '유효하지 않은 캐릭터 타입입니다.' });
+      }
+      updateFields.push('character_type = ?');
+      queryParams.push(characterType);
     }
 
     // skin 수정
@@ -570,6 +587,25 @@ exports.leaveRoom = async (req, res) => {
 // GET /players/:playerId/contribution
 // 기여도 조회
 // ==========================================
+// DELETE /players/:playerId/cancel — 루틴 미설정 플레이어 등록 취소 (완전 삭제)
+exports.cancelRegistration = async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const { playerId } = req.params;
+    // 루틴이 이미 있으면 삭제 거부 (실수 방지)
+    const [routines] = await connection.query('SELECT id FROM routines WHERE player_id = ? LIMIT 1', [playerId]);
+    if (routines.length > 0) {
+      return res.status(400).json({ success: false, error: '루틴이 이미 설정된 플레이어는 취소할 수 없습니다.' });
+    }
+    await connection.query('DELETE FROM players WHERE id = ?', [playerId]);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류' });
+  } finally {
+    connection.release();
+  }
+};
+
 exports.getContribution = async (req, res) => {
   const connection = await pool.getConnection();
 
