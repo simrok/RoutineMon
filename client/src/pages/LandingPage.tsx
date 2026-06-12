@@ -147,6 +147,22 @@ export default function LandingPage() {
         )}
       </div>
 
+      {/* 하단 캐릭터 퍼레이드 */}
+      <div className="landing-characters">
+        {[
+          { src: '/assets/player/player_red.png',    alt: 'red',    delay: '0s'   },
+          { src: '/assets/player/player_white.png',  alt: 'white',  delay: '-3.2s' },
+          { src: '/assets/player/player_blue.png',   alt: 'blue',   delay: '-6.4s' },
+          { src: '/assets/player/player_yellow.png', alt: 'yellow', delay: '-9.6s' },
+          { src: '/assets/player/player_green.png',  alt: 'green',  delay: '-12.8s' },
+        ].map(({ src, alt, delay }) => (
+          <div key={alt} className="landing-char-walker" style={{ animationDelay: delay }}>
+            <img className="landing-char" src={src} alt={alt} />
+            <div className="landing-char-shadow" />
+          </div>
+        ))}
+      </div>
+
     </div>
   )
 }

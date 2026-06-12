@@ -20,7 +20,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 16px 40px;
+  padding: 20px 16px 16px;
   position: relative;
   overflow-x: hidden;
 }
@@ -229,4 +229,54 @@
 .start-btn img {
   width: 100%;
   object-fit: contain;
+}
+
+/* 하단 캐릭터 퍼레이드 */
+.landing-characters {
+  position: relative;
+  width: 100%;
+  height: 70px;
+  overflow: hidden;
+  margin-top: 5px;
+  margin-bottom: -10px;
+}
+
+/* 가로 이동 */
+.landing-char-walker {
+  position: absolute;
+  bottom: 0;
+  animation: walk-x 16s linear infinite;
+}
+
+/* 위아래 걷는 동작 */
+.landing-char {
+  width: 48px;
+  display: block;
+  image-rendering: pixelated;
+  object-fit: contain;
+  animation: walk-bob 1s ease-in-out infinite;
+}
+
+@keyframes walk-x {
+  from { transform: translateX(-70px); }
+  to   { transform: translateX(500px); }
+}
+
+@keyframes walk-bob {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-2px); }
+}
+
+.landing-char-shadow {
+  width: 36px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 50%;
+  margin: 0 auto;
+  animation: shadow-pulse 1s ease-in-out infinite;
+}
+
+@keyframes shadow-pulse {
+  0%, 100% { transform: scaleX(1);   opacity: 0.35; }
+  50%       { transform: scaleX(0.6); opacity: 0.15; }
 }
