@@ -120,6 +120,7 @@ const createTables = async () => {
         accepted_by_player_id INT DEFAULT NULL,
         accepted_at DATETIME DEFAULT NULL,
         expires_at DATETIME DEFAULT NULL,
+        accepted_player_count INT DEFAULT 1,
         FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
         FOREIGN KEY (definition_id) REFERENCES party_quest_definitions(id),
         FOREIGN KEY (accepted_by_player_id) REFERENCES players(id),
