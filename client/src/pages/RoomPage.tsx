@@ -306,8 +306,14 @@ export default function RoomPage() {
         const now = new Date()
         const deadline = new Date()
         deadline.setHours(q.scheduledHour + 2, 30, 0, 0)
-        if (deadline <= now) deadline.setDate(deadline.getDate() + 1)
-        const secs = Math.max(0, Math.floor((deadline.getTime() - now.getTime()) / 1000))
+        const secs = Math.floor((deadline.getTime() - now.getTime()) / 1000)
+        if (secs <= 0) {
+          // 수락 기한 만료 → 퀘스트 없음으로 처리
+          setPartyState('none')
+          setPendingQuestInfo(null)
+          setActiveQuestInfo(null)
+          return
+        }
         setPendingQuestInfo({ partyQuestId: q.partyQuestId, content: q.content, scheduledHour: q.scheduledHour })
         setAcceptTimeLeft(secs)
         setPartyState('pending')
