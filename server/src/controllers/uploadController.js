@@ -203,11 +203,14 @@ exports.getContributionCounts = async (req, res) => {
 // [명세서 5.1] POST /uploads/daily — 일일 루틴 사진 업로드 및 인증
 exports.uploadDailyRoutine = async (req, res) => {
 
+    console.log('[Upload] 요청 수신 - body:', req.body, '| file:', req.file ? req.file.filename : 'null');
+
     const { playerId, routineId } = req.body;
     const imageUrl = req.file ? `/uploads/daily/${req.file.filename}` : req.body.imageUrl;
 
     // 1. 필수 파라미터 누락 검증
     if (!playerId || !routineId || !imageUrl) {
+      console.log('[Upload] 파라미터 누락 - playerId:', playerId, 'routineId:', routineId, 'imageUrl:', imageUrl);
       return res.status(400).json({ success: false, error: '필수 파라미터가 누락되었습니다.' });
     }
 
