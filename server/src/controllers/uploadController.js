@@ -92,17 +92,19 @@ exports.getTodayUploads = async (req, res) => {
       };
     });
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        date: today,
-        players: playersData,
-        dailyQuestProgress: {
-          completedCount: dailyQuestCompletedCount,
-          totalCount: players.length
+    return res.status(200)
+      .set('Cache-Control', 'no-store')
+      .json({
+        success: true,
+        data: {
+          date: today,
+          players: playersData,
+          dailyQuestProgress: {
+            completedCount: dailyQuestCompletedCount,
+            totalCount: players.length
+          }
         }
-      }
-    });
+      });
 
   } catch (err) {
     console.error('❌ 오늘 업로드 현황 조회 에러:', err.message);
