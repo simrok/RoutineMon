@@ -148,7 +148,7 @@ export default function UploadPage() {
   // ── 일일 업로드 현황 fetch ────────────────────────────────
   const fetchDailyStatus = () => {
     if (!roomCode) return
-    fetch(`${API_BASE}/rooms/${roomCode}/daily-uploads/today`)
+    fetch(`${API_BASE}/rooms/${roomCode}/daily-uploads/today`, { cache: 'no-store' })
       .then(r => r.json())
       .then(json => {
         if (json.success && json.data?.players) {
@@ -834,3 +834,4 @@ export default function UploadPage() {
     </div>
   )
 }
+                                                                                                                                                                                                    
