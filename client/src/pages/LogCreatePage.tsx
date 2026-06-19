@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import html2canvas from 'html2canvas'
 import './LogCreatePage.css'
 
 const API_BASE = 'http://localhost:4000/api'
@@ -47,6 +48,7 @@ export default function LogCreatePage() {
   const { roomCode } = useParams<{ roomCode: string }>()
   const [homeHover, setHomeHover] = useState(false)
   const [downloadHover, setDownloadHover] = useState(false)
+  const cardRef = useRef<HTMLElement>(null)
 
   const [members, setMembers] = useState<Member[]>([])
   // playerId → imageUrl[] (routineIndex 순서, 최대 4개)
@@ -132,8 +134,17 @@ export default function LogCreatePage() {
       .catch(err => console.error('파티 퀘스트 조회 실패:', err))
   }, [roomCode])
 
-  const handleDownload = () => {
-    alert('다운로드 기능은 추후 연결 예정입니다.')
+  const handleDownload = async () => {
+    if (!cardRef.current) return
+    const canvas = await html2canvas(cardRef.current, {
+      useCORS: true,
+      scale: 2,
+      backgroundColor: null,
+    })
+    const link = document.createElement('a')
+    link.download = `routinemon-log-${dateText.replace(/\./g, '').replace(/\s/g, '')}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
   }
 
   return (
@@ -164,7 +175,7 @@ export default function LogCreatePage() {
         </header>
 
         <main className="logcreate-content">
-          <section className="logcreate-card">
+          <section className="logcreate-card" ref={cardRef}>
             <div className="logcreate-card-logo-area">
               <img className="logcreate-card-logo" src="/assets/logo/6.png" alt="RoutineMon" />
               <img className="logcreate-card-logo-sub" src="/assets/logo/low.png" alt="subtitle" />
