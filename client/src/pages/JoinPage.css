@@ -3,7 +3,6 @@
   justify-content: center;
   align-items: flex-start;
   min-height: 100vh;
-  background: #1a1040;
 }
 
 .joinpage-board {
@@ -11,7 +10,11 @@
   width: 100%;
   max-width: 430px;
   min-height: 100vh;
-  background: linear-gradient(180deg, #1a1040 0%, #0d0826 100%);
+  background:
+    linear-gradient(rgba(4, 6, 40, 0.08), rgba(4, 6, 40, 0.08)),
+    url('/assets/backgroundImage/back.png');
+  background-size: cover;
+  background-position: center;
   display: flex;
   flex-direction: column;
   align-items: center;

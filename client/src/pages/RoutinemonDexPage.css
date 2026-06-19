@@ -10,7 +10,6 @@
 .dexscreen-page {
   width: 100%;
   min-height: 100vh;
-  background: #111219;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -24,7 +23,7 @@
   min-height: 100vh;
   background:
     linear-gradient(rgba(4, 6, 40, 0.15), rgba(4, 6, 40, 0.15)),
-    url('/assets/backgroundImage/background.png');
+    url('/assets/backgroundImage/back.png');
   background-size: cover;
   background-position: center;
   padding: 28px 28px 36px;
@@ -32,19 +31,6 @@
   overflow: hidden;
 }
 
-.dexscreen-phone::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(#ffffff 1px, transparent 1px),
-    radial-gradient(#d8caff 1px, transparent 1px);
-  background-size: 38px 38px, 61px 61px;
-  background-position: 4px 12px, 22px 32px;
-  opacity: 0.45;
-  z-index: 1;
-  pointer-events: none;
-}
 
 .dexscreen-header,
 .dexscreen-panel,
@@ -549,7 +535,6 @@
   }
 
   .dexscreen-panel {
-    min-height: calc(100vh - 120px);
     padding: 18px 16px 24px;
   }
 

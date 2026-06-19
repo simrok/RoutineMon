@@ -8,6 +8,14 @@
 /* =========================
    LAYOUT & CONTAINER
 ========================= */
+.roompage-outer {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
 .roompage-container {
   font-family: 'GalmuriMono9', monospace;
   width: 100%;

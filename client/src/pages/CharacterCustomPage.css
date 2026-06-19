@@ -10,7 +10,6 @@
 .customscreen-page {
   width: 100vw;
   min-height: 100vh;
-  background: #111219;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -25,7 +24,7 @@
   min-height: 100vh;
   background:
     linear-gradient(rgba(4, 6, 40, 0.15), rgba(4, 6, 40, 0.15)),
-    url('/assets/backgroundImage/background.png');
+    url('/assets/backgroundImage/back.png');
   background-size: cover;
   background-position: center;
   padding: 28px 28px 36px;
@@ -33,19 +32,6 @@
   overflow: hidden;
 }
 
-.customscreen-phone::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(#ffffff 1px, transparent 1px),
-    radial-gradient(#d8caff 1px, transparent 1px);
-  background-size: 38px 38px, 61px 61px;
-  background-position: 4px 12px, 22px 32px;
-  opacity: 0.45;
-  z-index: 1;
-  pointer-events: none;
-}
 
 .customscreen-header,
 .customscreen-panel {
@@ -138,8 +124,8 @@
 }
 
 .customscreen-character {
-  width: 132px;
-  height: 132px;
+  width: 120px;
+  height: 120px;
   object-fit: contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.9));
@@ -244,7 +230,7 @@
 
 /* 컬러 영역 */
 .customscreen-color-section {
-  margin-top: 32px;
+  margin-top: 28px;
 }
 
 .customscreen-color-row {
