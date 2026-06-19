@@ -42,12 +42,12 @@ export default function NicknameSetupPage() {
   // 닉네임
   const [nickname, setNickname] = useState('')
   const [nicknameStatus, setNicknameStatus] = useState<'ok' | 'fail' | null>(null)
-  const [nicknameConfirmed, setNicknameConfirmed] = useState(false)
+  const [_nicknameConfirmed, setNicknameConfirmed] = useState(false)
 
   // PIN
   const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', ''])
   const [pinStatus, setPinStatus] = useState<'ok' | 'fail' | null>(null)
-  const [pinConfirmed, setPinConfirmed] = useState(false)
+  const [_pinConfirmed, setPinConfirmed] = useState(false)
   const [pinVisible, setPinVisible] = useState(false)
   const pinRefs = useRef<(HTMLInputElement | null)[]>([])
 

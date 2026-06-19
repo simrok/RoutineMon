@@ -1,4 +1,5 @@
-import { createContext, useContext, useRef, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useRef, useState, useEffect } from 'react'
+import type { ReactNode } from 'react'
 
 interface BgmContextType {
   muted: boolean
