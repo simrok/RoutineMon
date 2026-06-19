@@ -20,9 +20,8 @@ body {
 }
 
 .uploadscreen-page {
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
-  background: #111219;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -34,30 +33,19 @@ body {
 .uploadscreen-board {
   position: relative;
   width: 430px;
-  min-height: 760px;
+  min-height: max(810px, 100vh);
   background:
     linear-gradient(rgba(4, 6, 40, 0.1), rgba(4, 6, 40, 0.1)),
-    url('/assets/backgroundImage/background.png');
+    url('/assets/backgroundImage/back.png');
   background-size: cover;
   background-position: center;
   padding: 28px 28px 38px;
   box-sizing: border-box;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.uploadscreen-board::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(#ffffff 1px, transparent 1px),
-    radial-gradient(#d8caff 1px, transparent 1px);
-  background-size: 38px 38px, 61px 61px;
-  background-position: 4px 12px, 22px 32px;
-  opacity: 0.45;
-  z-index: 1;
-  pointer-events: none;
-}
 
 .uploadscreen-header,
 .uploadscreen-top-buttons,
@@ -231,6 +219,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 25px;
+  flex: 1;
 }
 
 .uploadscreen-player-row {

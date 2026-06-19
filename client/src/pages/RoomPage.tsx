@@ -164,6 +164,20 @@ export default function RoomPage() {
   const [timeLeft, setTimeLeft] = useState<number>(0)
   const [acceptTimeLeft, setAcceptTimeLeft] = useState<number>(0)
 
+  // ── 자동 축소 ────────────────────────────────────────────────
+  const [pageScale, setPageScale] = useState(1)
+
+  useEffect(() => {
+    const CONTENT_HEIGHT = 880
+    const updateScale = () => {
+      const scale = Math.min(1, window.innerHeight / CONTENT_HEIGHT)
+      setPageScale(scale)
+    }
+    updateScale()
+    window.addEventListener('resize', updateScale)
+    return () => window.removeEventListener('resize', updateScale)
+  }, [])
+
   // ====================
   // EFFECTS
   // ====================
@@ -661,9 +675,16 @@ export default function RoomPage() {
   // RENDER
   // ====================
   return (
-    <div className="roompage-container">
+    <div className="roompage-outer">
+      <div
+        className="roompage-container"
+        style={{
+          transform: `scale(${pageScale})`,
+          transformOrigin: 'top center',
+        }}
+      >
       <div className="roompage-phone">
-        
+
         {/* HEADER */}
         <header className="roompage-header">
           <div className="roompage-logo-area">
@@ -1200,11 +1221,11 @@ export default function RoomPage() {
         {showPartyPopup && (
           <div className="roompage-modal-backdrop">
             <div className="roompage-party-modal">
-              
+
               <div className="roompage-modal-frame-wrapper">
                 <img
                   className="roompage-modal-frame-img"
-                  src="/assets/frame/퀘스트창.png" 
+                  src="/assets/frame/퀘스트창.png"
                   alt="quest frame"
                 />
 
@@ -1229,10 +1250,11 @@ export default function RoomPage() {
                   <img src="/assets/button/no.png" alt="no" />
                 </button>
               </div>
-              
+
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   )

@@ -14,6 +14,7 @@ const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 // 파티 퀘스트 상태 조회
 router.get('/rooms/:roomCode/party-quests/active', partyQuestController.getActivePartyQuest);
 router.get('/rooms/:roomCode/party-quests/pending', partyQuestController.getPendingPartyQuest);
+router.get('/rooms/:roomCode/party-quests/today-last', partyQuestController.getTodayLastPartyQuest);
 
 // 수락 / 업로드 / 삭제
 router.post('/party-quests/:partyQuestId/accept', partyQuestController.acceptPartyQuest);

@@ -7,43 +7,31 @@
 }
 
 .logcreate-page {
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
-  background: #111219;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  overflow-x: hidden;
+  overflow: hidden;
   font-family: 'GalmuriMono9', monospace;
 }
 
 .logcreate-board {
   position: relative;
   width: 430px;
-  min-height: 760px;
+  min-height: max(760px, 100vh);
   background:
     linear-gradient(rgba(4, 6, 40, 0.08), rgba(4, 6, 40, 0.08)),
-    url('/assets/backgroundImage/background.png');
+    url('/assets/backgroundImage/back.png');
   background-size: cover;
   background-position: center;
   padding: 28px 14px 36px;
   box-sizing: border-box;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.logcreate-board::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(#ffffff 1px, transparent 1px),
-    radial-gradient(#d8caff 1px, transparent 1px);
-  background-size: 38px 38px, 61px 61px;
-  background-position: 4px 12px, 22px 32px;
-  opacity: 0.35;
-  z-index: 1;
-  pointer-events: none;
-}
 
 .logcreate-header,
 .logcreate-content {
@@ -125,6 +113,9 @@
 
 .logcreate-content {
   margin-top: -20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .logcreate-card {
@@ -140,7 +131,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 5px;
 }
 
 .logcreate-card-logo {
@@ -158,15 +149,16 @@
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 .logcreate-member {
-  height: 75px;
+  height: 90px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
+  min-width: 0;
 }
 
 .logcreate-member img {
@@ -180,12 +172,22 @@
 .logcreate-member span {
   margin-top: 1px;
   color: #ffffff;
-  font-size: 15px;
+  font-size: 10px;
   text-shadow:
     1px 1px 0 #7d5cff,
     -1px 1px 0 #7d5cff,
     1px -1px 0 #7d5cff,
     -1px -1px 0 #7d5cff;
+}
+
+.logcreate-member-nickname {
+  display: block;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(6px, 2vw, 13px);
 }
 
 .logcreate-grid {
@@ -271,7 +273,7 @@
   display: block;
   width: 170px;
   height: 60px;
-  margin: 30px auto 0;
+  margin: 15px auto 0;
   border: none;
   background: transparent;
   padding: 0;

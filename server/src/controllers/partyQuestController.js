@@ -328,6 +328,45 @@ exports.uploadPartyQuest = async (req, res) => {
   }
 };
 
+// GET /api/rooms/:roomCode/party-quests/today-last — 당일 마지막 수락 파티퀘스트 + 업로드 조회
+exports.getTodayLastPartyQuest = async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const { roomCode } = req.params;
+    const [roomRows] = await connection.query('SELECT id FROM rooms WHERE room_code = ?', [roomCode]);
+    if (roomRows.length === 0)
+      return res.status(404).json({ success: false, error: '존재하지 않는 방 코드입니다.' });
+    const roomId = roomRows[0].id;
+
+    const kstDate = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+    const today = kstDate.toISOString().split('T')[0];
+
+    const [questRows] = await connection.query(
+      `SELECT pq.id AS partyQuestId, pq.status, pqd.content
+       FROM party_quests pq
+       JOIN party_quest_definitions pqd ON pq.definition_id = pqd.id
+       WHERE pq.room_id = ? AND pq.quest_date = ? AND pq.status IN ('active', 'completed')
+       ORDER BY pq.id DESC LIMIT 1`,
+      [roomId, today]
+    );
+
+    if (questRows.length === 0)
+      return res.status(200).json({ success: true, data: null });
+
+    const quest = questRows[0];
+    const [uploadRows] = await connection.query(
+      'SELECT player_id AS playerId, image_url AS imageUrl FROM party_quest_uploads WHERE party_quest_id = ?',
+      [quest.partyQuestId]
+    );
+
+    return res.status(200).json({ success: true, data: { ...quest, uploads: uploadRows } });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: '서버 내부 오류 발생' });
+  } finally {
+    connection.release();
+  }
+};
+
 // DELETE /api/party-quests/:partyQuestId/uploads/:playerId — 파티 퀘스트 사진 삭제
 exports.deletePartyUpload = async (req, res) => {
   const connection = await pool.getConnection();
