@@ -2,9 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
 import { getSocket } from '../socket'
+import { API_BASE } from '../config'
 import './RoutinemonDexPage.css'
-
-const API_BASE = 'http://localhost:4000/api'
 
 type MonEntry = {
   catalogId: number

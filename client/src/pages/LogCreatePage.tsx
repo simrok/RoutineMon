@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import html2canvas from 'html2canvas'
+import { API_BASE, SERVER_BASE } from '../config'
 import './LogCreatePage.css'
-
-const API_BASE = 'http://localhost:4000/api'
-const SERVER_BASE = 'http://localhost:4000'
 
 const toAbsoluteUrl = (url: string | null | undefined): string | null => {
   if (!url) return null

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
 import { getSocket, joinRoom, leaveRoom } from '../socket'
+import { API_BASE, SERVER_BASE } from '../config'
 import './UploadPage.css'
 
 // ── 타입 ─────────────────────────────────────────────────────
@@ -31,10 +32,6 @@ type ActivePartyQuest = {
 }
 
 type UploadMode = 'daily' | 'party'
-
-// ── 상수 ─────────────────────────────────────────────────────
-const API_BASE = 'http://localhost:4000/api'
-const SERVER_BASE = 'http://localhost:4000'
 
 const toAbsoluteUrl = (url: string | null) => {
   if (!url) return null

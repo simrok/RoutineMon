@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
 import { getSocket, joinRoom, leaveRoom } from '../socket'
 import { useBgm } from '../context/BgmContext'
+import { API_BASE } from '../config'
 import './RoomPage.css'
 
 type PartyState = 'none' | 'pending' | 'active'
@@ -59,7 +60,6 @@ interface MonData {
 
 // ── 파티 퀘스트 상수 ──────────────────────────────────────────
 const HOUR_TO_DOT: Record<number, number> = { 1: 0, 7: 1, 13: 2, 19: 3 }
-const API_BASE = 'http://localhost:4000/api'
 
 interface PendingQuestInfo {
   partyQuestId: number
@@ -185,7 +185,7 @@ export default function RoomPage() {
   // 플레이어 목록 fetch
   useEffect(() => {
     if (!roomCode) return
-    fetch(`http://localhost:4000/api/rooms/${roomCode}/players-with-routines`)
+    fetch(`${API_BASE}/rooms/${roomCode}/players-with-routines`)
       .then(res => res.json())
       .then(json => {
         if (!json.success || !json.data?.players) return
@@ -233,7 +233,7 @@ export default function RoomPage() {
   // 몬 + 일일퀘스트 진행도 fetch
   const fetchMon = () => {
     if (!roomCode) return
-    fetch(`http://localhost:4000/api/rooms/${roomCode}`)
+    fetch(`${API_BASE}/rooms/${roomCode}`)
       .then(res => res.json())
       .then(json => {
         if (!json.success) return
@@ -245,7 +245,7 @@ export default function RoomPage() {
 
   const fetchMonFace = () => {
     if (!roomCode) return
-    fetch(`http://localhost:4000/api/rooms/${roomCode}/mon-face`)
+    fetch(`${API_BASE}/rooms/${roomCode}/mon-face`)
       .then(res => res.json())
       .then(json => {
         if (json.success && json.data) setMonFaceData(json.data)
@@ -332,7 +332,7 @@ export default function RoomPage() {
   // 기여도 집계 fetch
   const fetchContributionCounts = () => {
     if (!roomCode) return
-    fetch(`http://localhost:4000/api/rooms/${roomCode}/players/contribution-counts`)
+    fetch(`${API_BASE}/rooms/${roomCode}/players/contribution-counts`)
       .then(res => res.json())
       .then(json => {
         if (json.success && Array.isArray(json.data)) {
@@ -538,7 +538,7 @@ export default function RoomPage() {
     if (!roomCode) return
     setShowAddSlotConfirm(false)
     try {
-      const res = await fetch(`http://localhost:4000/api/rooms/${roomCode}/max-players`, { method: 'PATCH' })
+      const res = await fetch(`${API_BASE}/rooms/${roomCode}/max-players`, { method: 'PATCH' })
       const json = await res.json()
       if (json.success) {
         setMaxPlayers(json.data.maxPlayers)
@@ -622,7 +622,7 @@ export default function RoomPage() {
       return
     }
     try {
-      await fetch(`http://localhost:4000/api/players/${myPlayer.playerId}/leave`, {
+      await fetch(`${API_BASE}/players/${myPlayer.playerId}/leave`, {
         method: 'DELETE',
       })
     } catch (e) {
@@ -1256,6 +1256,4 @@ export default function RoomPage() {
         )}
       </div>
       </div>
-    </div>
-  )
-}
+    

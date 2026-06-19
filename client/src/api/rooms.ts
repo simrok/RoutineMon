@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:4000/api'
+import { API_BASE as BASE_URL } from '../config'
 
 // [방 생성] POST /api/rooms
 export const createRoom = async (maxPlayers: number): Promise<{ roomCode: string; roomId: number }> => {

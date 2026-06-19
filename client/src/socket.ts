@@ -1,10 +1,11 @@
 import { io, Socket } from 'socket.io-client'
+import { SERVER_BASE } from './config'
 
 let socket: Socket | null = null
 
 export const getSocket = (): Socket => {
   if (!socket) {
-    socket = io('http://localhost:4000')
+    socket = io(SERVER_BASE)
   }
   return socket
 }

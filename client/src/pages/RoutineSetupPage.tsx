@@ -4,9 +4,8 @@ import { useRoomStore } from '../store/useRoomStore'
 import { registerPlayer } from '../api/rooms'
 import ConfirmPopup from '../components/ConfirmPopup'
 import { useBgm } from '../context/BgmContext'
+import { API_BASE as BASE_URL } from '../config'
 import './RoutineSetupPage.css'
-
-const BASE_URL = 'http://localhost:4000/api'
 
 interface RoutineSlot {
   emoji: string

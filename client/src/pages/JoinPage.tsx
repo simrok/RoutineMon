@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useBgm } from '../context/BgmContext'
+import { API_BASE } from '../config'
 import './JoinPage.css'
-
-const API_BASE = 'http://localhost:4000/api'
 
 const SLOT_COLOR: Record<number, string> = {
   1: '#ffffff',

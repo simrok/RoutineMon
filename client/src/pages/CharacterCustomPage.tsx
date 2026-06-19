@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
+import { API_BASE } from '../config'
 import './CharacterCustomPage.css'
-
-const API_BASE = 'http://localhost:4000/api'
 
 const colorOptions = [
   { key: 'white',  colorImage: '/assets/color/1.png', playerImage: '/assets/player/player_white.png'  },
@@ -78,7 +77,7 @@ export default function CharacterCustomPage() {
     setNickname(myPlayer.nickname)
 
     // 색상 로드
-    fetch(`http://localhost:4000/api/rooms/${roomCode}/players-with-routines`)
+    fetch(`${API_BASE}/rooms/${roomCode}/players-with-routines`)
       .then(r => r.json())
       .then(json => {
         const me = (json.data?.players ?? []).find(
