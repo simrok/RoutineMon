@@ -15,14 +15,10 @@ exports.getTodayUploads = async (req, res) => {
     }
     const roomId = rooms[0].id;
 
-    // KST 기준 오늘 날짜 (created_at 범위 비교용)
-    const nowMs = Date.now();
-    const kstOffsetMs = 9 * 60 * 60 * 1000;
-    const nowKSTms = nowMs + kstOffsetMs;
-    const kstDayStartMs = nowKSTms - (nowKSTms % (24 * 60 * 60 * 1000)); // KST 자정 (UTC ms)
-    const dayStartUTC = new Date(kstDayStartMs - kstOffsetMs).toISOString().slice(0, 19).replace('T', ' ');
-    const dayEndUTC = new Date(kstDayStartMs - kstOffsetMs + 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
-    const today = new Date(kstDayStartMs).toISOString().split('T')[0]; // 응답용 KST 날짜
+    // KST 기준 오늘 날짜 (MySQL NOW() 기준으로 계산해 JS 클럭 불일치 방지)
+    const [[{ today }]] = await connection.query(
+      `SELECT DATE_FORMAT(DATE_ADD(NOW(), INTERVAL 9 HOUR), '%Y-%m-%d') AS today`
+    );
 
     // 방의 모든 플레이어 조회
     const [players] = await connection.query(
@@ -49,14 +45,15 @@ exports.getTodayUploads = async (req, res) => {
       [playerIds]
     );
 
-    // 오늘 업로드 기록 조회 (KST 하루 범위로 created_at 비교)
-    console.log('[Today] playerIds:', playerIds, '| KST today:', today, '| UTC range:', dayStartUTC, '~', dayEndUTC);
+    // 오늘 업로드 기록 조회 (MySQL KST 날짜 직접 비교)
+    console.log('[Today] MySQL KST today:', today, '| playerIds:', playerIds);
     const [uploads] = await connection.query(
       `SELECT player_id as playerId, routine_id as routineId, image_url as imageUrl,
               TIME_FORMAT(created_at, '%H:%i') as uploadTime
        FROM daily_uploads
-       WHERE player_id IN (?) AND created_at >= ? AND created_at < ?`,
-      [playerIds, dayStartUTC, dayEndUTC]
+       WHERE player_id IN (?)
+         AND DATE_FORMAT(DATE_ADD(created_at, INTERVAL 9 HOUR), '%Y-%m-%d') = ?`,
+      [playerIds, today]
     );
     console.log('[Today] DB uploads found:', uploads.length, 'rows');
 
