@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { BgmProvider } from './context/BgmContext'
 import LandingPage from './pages/LandingPage'
@@ -17,21 +16,6 @@ import LogCreatePage from './pages/LogCreatePage'
 import RoutineSetupPage from './pages/RoutineSetupPage'
 
 function App() {
-  useEffect(() => {
-    const DESIGN_W = 430
-    const DESIGN_H = 932
-    const applyScale = () => {
-      const scale = Math.min(
-        window.innerWidth / DESIGN_W,
-        window.innerHeight / DESIGN_H
-      )
-      document.documentElement.style.zoom = Math.max(0.4, Math.min(scale, 3)).toFixed(4)
-    }
-    applyScale()
-    window.addEventListener('resize', applyScale)
-    return () => window.removeEventListener('resize', applyScale)
-  }, [])
-
   return (
     <BgmProvider>
       <BrowserRouter>
