@@ -352,7 +352,7 @@ export default function RoomPage() {
   useEffect(() => {
     if (!roomCode) return
     const socket = getSocket()
-    joinRoom(roomCode)
+    joinRoom(roomCode, myPlayerId)
 
     // 일일 업로드 변경 → 기여도 + 진행도 갱신
     const handleDailyUpload = () => {
@@ -436,7 +436,7 @@ export default function RoomPage() {
     socket.on('party-quest:failed', handlePartyQuestFailed)
 
     return () => {
-      leaveRoom(roomCode)
+      leaveRoom(roomCode, myPlayerId)
       socket.off('daily:upload-updated', handleDailyUpload)
       socket.off('daily:upload-deleted', handleDailyUpload)
       socket.off('party-quest:upload-updated', handlePartyUpload)

@@ -9,10 +9,10 @@ export const getSocket = (): Socket => {
   return socket
 }
 
-export const joinRoom = (roomCode: string) => {
-  getSocket().emit('join-room', roomCode)
+export const joinRoom = (roomCode: string, playerId: number) => {
+  getSocket().emit('join-room', { roomCode, playerId })
 }
 
-export const leaveRoom = (roomCode: string) => {
-  getSocket().emit('leave-room', roomCode)
+export const leaveRoom = (roomCode: string, playerId: number) => {
+  getSocket().emit('leave-room', { roomCode, playerId })
 }

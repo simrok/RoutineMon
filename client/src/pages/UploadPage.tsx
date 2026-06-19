@@ -210,7 +210,7 @@ export default function UploadPage() {
   useEffect(() => {
     if (!roomCode) return
     const socket = getSocket()
-    joinRoom(roomCode)
+    joinRoom(roomCode, myPlayerId)
 
     // 다른 플레이어가 일일 업로드 → 현황 재조회
     socket.on('daily:upload-updated', fetchDailyStatus)
@@ -228,7 +228,7 @@ export default function UploadPage() {
     socket.on('party-quest:completed', handlePartyCompleted)
 
     return () => {
-      leaveRoom(roomCode)
+      leaveRoom(roomCode, myPlayerId)
       socket.off('daily:upload-updated', fetchDailyStatus)
       socket.off('daily:upload-deleted', fetchDailyStatus)
       socket.off('party-quest:upload-updated', fetchPartyQuest)
