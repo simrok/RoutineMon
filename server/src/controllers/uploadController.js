@@ -15,9 +15,14 @@ exports.getTodayUploads = async (req, res) => {
     }
     const roomId = rooms[0].id;
 
-    // KST 기준 오늘 날짜
-    const kstDate = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
-    const today = kstDate.toISOString().split('T')[0];
+    // KST 기준 오늘 날짜 (created_at 범위 비교용)
+    const nowMs = Date.now();
+    const kstOffsetMs = 9 * 60 * 60 * 1000;
+    const nowKSTms = nowMs + kstOffsetMs;
+    const kstDayStartMs = nowKSTms - (nowKSTms % (24 * 60 * 60 * 1000)); // KST 자정 (UTC ms)
+    const dayStartUTC = new Date(kstDayStartMs - kstOffsetMs).toISOString().slice(0, 19).replace('T', ' ');
+    const dayEndUTC = new Date(kstDayStartMs - kstOffsetMs + 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+    const today = new Date(kstDayStartMs).toISOString().split('T')[0]; // 응답용 KST 날짜
 
     // 방의 모든 플레이어 조회
     const [players] = await connection.query(
@@ -44,16 +49,16 @@ exports.getTodayUploads = async (req, res) => {
       [playerIds]
     );
 
-    // 오늘 업로드 기록 조회
-    console.log('[Today] playerIds:', playerIds, '| date:', today);
+    // 오늘 업로드 기록 조회 (KST 하루 범위로 created_at 비교)
+    console.log('[Today] playerIds:', playerIds, '| KST today:', today, '| UTC range:', dayStartUTC, '~', dayEndUTC);
     const [uploads] = await connection.query(
       `SELECT player_id as playerId, routine_id as routineId, image_url as imageUrl,
               TIME_FORMAT(created_at, '%H:%i') as uploadTime
        FROM daily_uploads
-       WHERE player_id IN (?) AND upload_date = ?`,
-      [playerIds, today]
+       WHERE player_id IN (?) AND created_at >= ? AND created_at < ?`,
+      [playerIds, dayStartUTC, dayEndUTC]
     );
-    console.log('[Today] DB uploads found:', uploads);
+    console.log('[Today] DB uploads found:', uploads.length, 'rows');
 
     // 조회 결과를 플레이어별로 그룹핑
     const routineMap = {}; // playerId -> routineId[]
