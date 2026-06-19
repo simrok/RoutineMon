@@ -57,9 +57,11 @@ const createTables = async () => {
     `);
 
     // 3-1. players 테이블 character_type 컬럼 추가 (없을 경우)
-    await connection.query(`
-      ALTER TABLE players ADD COLUMN IF NOT EXISTS character_type VARCHAR(50) DEFAULT NULL;
-    `);
+    try {
+      await connection.query(`ALTER TABLE players ADD COLUMN character_type VARCHAR(50) DEFAULT NULL;`);
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
 
     // 4. routines 테이블
     await connection.query(`
