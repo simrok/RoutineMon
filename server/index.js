@@ -21,6 +21,7 @@ const rankingRoute = require('./src/routes/rankingRoute');
 const uploadRoute = require('./src/routes/uploadRoute');
 const partyQuestRoute = require('./src/routes/partyQuestRoute');
 const { startPartyQuestCron } = require('./src/cron/partyQuestCron');
+const { startCleanupCron } = require('./src/cron/cleanupCron');
 const monCatalogRoutes = require('./src/routes/monCatalogRoutes');
 const skinsRoutes = require('./src/routes/skinsRoutes');
 
@@ -104,4 +105,5 @@ const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
   console.log(`✅ 서버가 http://localhost:${PORT} 에서 실행 중입니다!`);
   startPartyQuestCron(io);
+  startCleanupCron();
 });

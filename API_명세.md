@@ -860,6 +860,8 @@ socket.emit('join-room', { roomCode: '123456', playerId: 10 });
 
 ## 서버 스케줄러 (Cron)
 
+### 파티 퀘스트 스케줄러
+
 `server/src/cron/partyQuestCron.js` — 서버 시작 시 자동 실행 (외부 라이브러리 없음, 순수 Node.js)
 
 | 실행 시각 | 동작 |
@@ -869,6 +871,21 @@ socket.emit('join-room', { roomCode: '123456', playerId: 10 });
 | 서버 시작 시 | 기존 active 퀘스트 중 `expires_at` 초과 시 즉시 만료 처리 |
 
 > `party_quest_definitions` 시드 데이터 10개가 DB 초기화 시 자동 삽입됩니다 (`INSERT INTO ... ON DUPLICATE KEY UPDATE`).
+
+### 데이터 정리 스케줄러
+
+`server/src/cron/cleanupCron.js` — 서버 시작 시 자동 실행 (순수 Node.js)
+
+| 실행 시각 | 동작 |
+|-----------|------|
+| 매일 00:00 (자정) | `upload_date`가 3일 이상 지난 `daily_uploads`의 이미지 파일 삭제 + `image_url = NULL` |
+| 매일 00:00 (자정) | `quest_date`가 3일 이상 지난 `party_quest_uploads`의 이미지 파일 삭제 + `image_url = NULL` |
+
+**삭제 대상 경로**
+- `server/uploads/daily/` — 일일 루틴 인증 사진
+- `server/uploads/party-quests/` — 파티 퀘스트 인증 사진
+
+> **DB 레코드(행)는 유지됩니다.** 이미지 파일과 `image_url` 컬럼만 정리하여 서버 용량을 확보하며, 기여도 랭킹 및 누적 집계(COUNT 기반)의 정확도는 보존됩니다.
 
 ---
 

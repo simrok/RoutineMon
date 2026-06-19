@@ -318,17 +318,20 @@ exports.uploadDailyRoutine = async (req, res) => {
 
               let newExp = currentExp + expGained;
 
+              // 진화 발생 여부 추적 (commit 이후 소켓 발송을 위해)
+              let evolutionOccurred = false;
+
               // 레벨업 및 기획서 기반 단계별 진화 시스템 (EGG -> BABY -> CHILD -> ADULT -> 만렙 시 EGG 리셋)
               if (newExp >= 100) {
                 newExp -= 100;
                 currentLevel += 1;
-                
+
                 if (currentLevel > 2) {
                   currentLevel = 1; // 다음 단계의 레벨 1로 리셋
-                  
+
                   if (currentStage === 'EGG') {
                     currentStage = 'BABY';
-                    // EGG → BABY: mon_catalog에서 랜덤 1/3 확률로 종 결정
+                    // EGG → BABY: mon_catalog에서 랜덤으로 종 결정
                     const [catalogs] = await connection.query('SELECT id FROM mon_catalog ORDER BY id ASC');
                     if (catalogs.length > 0) {
                       const randomIndex = Math.floor(Math.random() * catalogs.length);
@@ -342,13 +345,7 @@ exports.uploadDailyRoutine = async (req, res) => {
                     nextCatalogId = null;
                   }
 
-                  // 진화 성공 시 소켓 이벤트 브로드캐스트
-                  if (io) {
-                    io.to(roomCode).emit('mon:evolved', {
-                      newStage: currentStage,
-                      catalogId: nextCatalogId
-                    });
-                  }
+                  evolutionOccurred = true; // commit 후 소켓 발송할 것을 표시
                 }
               }
 
@@ -370,7 +367,9 @@ exports.uploadDailyRoutine = async (req, res) => {
                 expPercentage: newExp.toFixed(2)
               };
 
-              // [명세서 실시간 소켓 반영] 방 전체 일일퀘스트 완료 및 몬스터 상태 변경 전송
+              await connection.commit();
+
+              // [commit 이후] 소켓 이벤트 발송 — DB 반영 완료 후에만 클라이언트에 알림
               if (io) {
                 io.to(roomCode).emit('daily:quest-completed', { expGained: 20 });
                 io.to(roomCode).emit('mon:exp-updated', {
@@ -378,13 +377,20 @@ exports.uploadDailyRoutine = async (req, res) => {
                   level: currentLevel,
                   stage: currentStage
                 });
+                // 진화가 발생한 경우 도감 갱신을 위해 mon:evolved 추가 발송
+                if (evolutionOccurred) {
+                  io.to(roomCode).emit('mon:evolved', {
+                    newStage: currentStage,
+                    catalogId: nextCatalogId
+                  });
+                }
               }
             }
           }
         }
       }
 
-      await connection.commit();
+      if (!dailyQuestCompletedNow) await connection.commit();
 
       // 명세서 5.1 출력 응답 규격 100% 동기화 반환
       return res.status(201).json({

@@ -1,7 +1,7 @@
 const pool = require('../db/db');
 
 // 파티 퀘스트 발생 시각
-const PARTY_HOURS = [1, 7, 13, 19];
+const PARTY_HOURS = [1, 7, 12, 19]; // 시연용: 13시 → 12시 (시연 후 13으로 복구)
 
 /**
  * 현재 시각이 파티 퀘스트 수락 윈도우(scheduledHour:00 ~ scheduledHour+2:30) 안이면

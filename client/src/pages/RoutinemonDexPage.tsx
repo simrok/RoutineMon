@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useRoomStore } from '../store/useRoomStore'
+import { getSocket } from '../socket'
 import './RoutinemonDexPage.css'
 
 const API_BASE = 'http://localhost:4000/api'
@@ -40,20 +41,41 @@ export default function RoutinemonDexPage() {
   const [showDexInfo, setShowDexInfo] = useState(false)
   const [dexInfoOkHover, setDexInfoOkHover] = useState(false)
 
-  useEffect(() => {
-    const roomId = room?.roomId
-    if (!roomId) {
-      setLoading(false)
-      return
-    }
+  const fetchCatalog = useCallback((roomId: number) => {
     fetch(`${API_BASE}/mon-catalog?roomId=${roomId}`)
       .then((r) => r.json())
       .then((json) => {
         if (json.success) setMons(json.data ?? [])
       })
       .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [room?.roomId])
+  }, [])
+
+  // 최초 도감 로드
+  useEffect(() => {
+    const roomId = room?.roomId
+    if (!roomId) {
+      setLoading(false)
+      return
+    }
+    fetchCatalog(roomId)
+    setLoading(false)
+  }, [room?.roomId, fetchCatalog])
+
+  // 진화 발생 시 도감 자동 갱신
+  useEffect(() => {
+    const roomId = room?.roomId
+    if (!roomId) return
+
+    const socket = getSocket()
+    const handleEvolved = () => {
+      fetchCatalog(roomId)
+    }
+    socket.on('mon:evolved', handleEvolved)
+
+    return () => {
+      socket.off('mon:evolved', handleEvolved)
+    }
+  }, [room?.roomId, fetchCatalog])
 
   const landMons = mons.filter((m) => m.category === 'land')
   const obtainedCount = mons.filter((m) => m.obtained).length
