@@ -45,6 +45,7 @@ exports.getTodayUploads = async (req, res) => {
     );
 
     // 오늘 업로드 기록 조회
+    console.log('[Today] playerIds:', playerIds, '| date:', today);
     const [uploads] = await connection.query(
       `SELECT player_id as playerId, routine_id as routineId, image_url as imageUrl,
               TIME_FORMAT(created_at, '%H:%i') as uploadTime
@@ -52,6 +53,7 @@ exports.getTodayUploads = async (req, res) => {
        WHERE player_id IN (?) AND upload_date = ?`,
       [playerIds, today]
     );
+    console.log('[Today] DB uploads found:', uploads);
 
     // 조회 결과를 플레이어별로 그룹핑
     const routineMap = {}; // playerId -> routineId[]
