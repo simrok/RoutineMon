@@ -16,13 +16,25 @@ const PARTY_HOURS = [1, 7, 13, 19]; // 파티 퀘스트 발생 시각
 let _io = null; // 소켓 인스턴스 (startPartyQuestCron에서 주입)
 
 // ── 유틸 ──────────────────────────────────────────────────────
-/** 오늘(또는 내일) hour:minute:00까지 남은 밀리초 */
+const KST_OFFSET = 9 * 60 * 60 * 1000;
+
+/** KST 기준 현재 Date 객체 */
+function nowKst() {
+  return new Date(Date.now() + KST_OFFSET);
+}
+
+/** KST 기준 오늘 날짜 문자열 'YYYY-MM-DD' */
+function todayKst() {
+  return nowKst().toISOString().slice(0, 10);
+}
+
+/** KST 기준 hour:minute까지 남은 밀리초 */
 function msUntilTime(hour, minute = 0) {
-  const now = new Date();
-  const target = new Date();
-  target.setHours(hour, minute, 0, 0);
-  if (target <= now) target.setDate(target.getDate() + 1); // 이미 지났으면 내일
-  return target.getTime() - now.getTime();
+  const kstNow = nowKst();
+  const target = new Date(kstNow);
+  target.setUTCHours(hour, minute, 0, 0);
+  if (target <= kstNow) target.setUTCDate(target.getUTCDate() + 1);
+  return target.getTime() - kstNow.getTime();
 }
 
 /** hour:minute에 fn 실행, 이후 24시간마다 반복 */
@@ -58,7 +70,7 @@ async function createPartyQuestsForHour(scheduledHour) {
     }
     const definitionId = defs[0].id;
     const questContent = defs[0].content;
-    const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+    const today = todayKst();
 
     // 방마다 INSERT (UNIQUE KEY 위반 시 무시 — 이미 생성된 방은 스킵)
     let created = 0;
@@ -100,7 +112,7 @@ async function createPartyQuestsForHour(scheduledHour) {
 async function expirePendingQuests(scheduledHour) {
   const connection = await pool.getConnection();
   try {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayKst();
     // 만료 전 방 목록 조회 (소켓 방송용)
     const [pendingRows] = await connection.query(
       `SELECT pq.id, r.room_code FROM party_quests pq
@@ -158,9 +170,9 @@ async function expireActiveQuests() {
  * INSERT IGNORE 덕분에 이미 생성된 방은 중복 생성되지 않는다.
  */
 async function catchUpMissedQuests() {
-  const now = new Date();
-  const curH = now.getHours();
-  const curM = now.getMinutes();
+  const kst = nowKst();
+  const curH = kst.getUTCHours();
+  const curM = kst.getUTCMinutes();
 
   for (const hour of PARTY_HOURS) {
     const expireH = hour + 2;
