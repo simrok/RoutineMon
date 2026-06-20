@@ -24,7 +24,7 @@
 | 백엔드 | Node.js + Express |
 | 실시간 통신 | Socket.io |
 | 데이터베이스 | MySQL (mysql2) |
-| 이미지 저장 | 로컬 서버 (`uploads/` 폴더, multer) |
+| 이미지 저장 | Cloudinary (multer-storage-cloudinary) |
 | AI 이미지 판별 | Anthropic Claude Haiku Vision API (`@anthropic-ai/sdk`) |
 | 스케줄러 | 순수 Node.js (`setTimeout` / `setInterval`) |
 | 보안 | bcrypt (PIN 해싱) |
@@ -199,6 +199,9 @@ DB_PASSWORD=your_password
 DB_NAME=routinemon
 ANTHROPIC_API_KEY=your_anthropic_api_key
 PORT=4000
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 ### 클라이언트 실행
