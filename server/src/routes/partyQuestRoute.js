@@ -1,15 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const path = require('path');
-const multer = require('multer');
 const partyQuestController = require('../controllers/partyQuestController');
 const { createPartyQuestsForHour } = require('../cron/partyQuestCron');
+const { createUploader } = require('../utils/cloudinary');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/party-quests/'),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname)),
-});
-const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
+const upload = createUploader('routinemon/party-quests');
 
 // 파티 퀘스트 상태 조회
 router.get('/rooms/:roomCode/party-quests/active', partyQuestController.getActivePartyQuest);

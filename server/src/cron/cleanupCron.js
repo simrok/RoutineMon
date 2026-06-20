@@ -12,25 +12,8 @@
  *  - party_quest_uploads   (party_quests.quest_date 기준)
  */
 
-const fs = require('fs');
-const path = require('path');
 const pool = require('../db/db');
-
-const UPLOAD_BASE = path.join(__dirname, '../../../uploads');
-
-/** 로컬 이미지 파일 삭제 (없으면 무시) */
-function deleteFileIfExists(imageUrl) {
-  if (!imageUrl) return;
-  const relativePath = imageUrl.replace(/^\/uploads\//, '');
-  const fullPath = path.join(UPLOAD_BASE, relativePath);
-  try {
-    if (fs.existsSync(fullPath)) {
-      fs.unlinkSync(fullPath);
-    }
-  } catch (err) {
-    console.error(`[Cleanup] 파일 삭제 실패: ${fullPath} —`, err.message);
-  }
-}
+const { deleteFromCloudinary } = require('../utils/cloudinary');
 
 /** 오늘(또는 내일) 00:00:00까지 남은 밀리초 */
 function msUntilMidnight() {
@@ -54,7 +37,7 @@ async function runCleanup() {
     );
 
     if (oldDailyUploads.length > 0) {
-      oldDailyUploads.forEach(row => deleteFileIfExists(row.image_url));
+      for (const row of oldDailyUploads) await deleteFromCloudinary(row.image_url);
 
       await connection.query(
         `UPDATE daily_uploads
@@ -77,7 +60,7 @@ async function runCleanup() {
     );
 
     if (oldPartyUploads.length > 0) {
-      oldPartyUploads.forEach(row => deleteFileIfExists(row.image_url));
+      for (const row of oldPartyUploads) await deleteFromCloudinary(row.image_url);
 
       const ids = oldPartyUploads.map(r => r.id);
       await connection.query(

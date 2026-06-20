@@ -212,7 +212,7 @@ exports.uploadDailyRoutine = async (req, res) => {
     console.log('[Upload] 요청 수신 - body:', req.body, '| file:', req.file ? req.file.filename : 'null');
 
     const { playerId, routineId } = req.body;
-    const imageUrl = req.file ? `/uploads/daily/${req.file.filename}` : req.body.imageUrl;
+    const imageUrl = req.file ? req.file.path : req.body.imageUrl;
 
     // 1. 필수 파라미터 누락 검증
     if (!playerId || !routineId || !imageUrl) {

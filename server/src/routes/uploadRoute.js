@@ -1,14 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const path = require('path');
-const multer = require('multer');
 const uploadController = require('../controllers/uploadController');
+const { createUploader } = require('../utils/cloudinary');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/daily/'),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname)),
-});
-const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
+const upload = createUploader('routinemon/daily');
 
 // 명세서 5.1 — 일일 업로드
 router.post('/players/:playerId/daily-uploads', upload.single('image'), uploadController.uploadDailyRoutine);

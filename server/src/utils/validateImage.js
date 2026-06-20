@@ -1,30 +1,15 @@
 const Anthropic = require('@anthropic-ai/sdk');
-const fs = require('fs');
-const path = require('path');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const MEDIA_TYPE_MAP = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
-};
-
 /**
  * 업로드된 이미지가 파티퀘스트 조건에 부합하는지 Claude Vision으로 판별
- * @param {string} imagePath - 서버 로컬 파일 경로
+ * @param {string} imageUrl - Cloudinary 이미지 URL
  * @param {string} questContent - 퀘스트 내용 (예: "웃는 표정으로 셀카를 찍어라!")
  * @returns {Promise<{ approved: boolean, reason: string }>}
  */
-async function validateImageForQuest(imagePath, questContent) {
+async function validateImageForQuest(imageUrl, questContent) {
   try {
-    const imageBuffer = fs.readFileSync(imagePath);
-    const base64Image = imageBuffer.toString('base64');
-    const ext = path.extname(imagePath).toLowerCase();
-    const mediaType = MEDIA_TYPE_MAP[ext] || 'image/jpeg';
-
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 20,
@@ -35,9 +20,8 @@ async function validateImageForQuest(imagePath, questContent) {
             {
               type: 'image',
               source: {
-                type: 'base64',
-                media_type: mediaType,
-                data: base64Image,
+                type: 'url',
+                url: imageUrl,
               },
             },
             {

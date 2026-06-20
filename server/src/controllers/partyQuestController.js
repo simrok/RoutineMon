@@ -1,7 +1,6 @@
 const pool = require('../db/db');
-const path = require('path');
-const fs = require('fs');
 const { validateImageForQuest } = require('../utils/validateImage');
+const { deleteFromCloudinary } = require('../utils/cloudinary');
 
 // GET /api/rooms/:roomCode/party-quests/active — 현재 active 파티 퀘스트 조회
 exports.getActivePartyQuest = async (req, res) => {
@@ -144,7 +143,7 @@ exports.uploadPartyQuest = async (req, res) => {
   try {
     const { partyQuestId } = req.params;
     const { playerId } = req.body;
-    const imageUrl = req.file ? `/uploads/party-quests/${req.file.filename}` : req.body.imageUrl;
+    const imageUrl = req.file ? req.file.path : req.body.imageUrl;
 
     if (!playerId || !imageUrl) {
       return res.status(400).json({ success: false, error: 'playerId와 image는 필수입니다.' });
@@ -179,12 +178,11 @@ exports.uploadPartyQuest = async (req, res) => {
       const questContent = quest.content; // party_quest_definitions.content (JOIN 필요)
       let aiApproved = true;
       if (req.file) {
-        const localPath = path.join(__dirname, '../../uploads/party-quests', req.file.filename);
-        const { approved, reason } = await validateImageForQuest(localPath, questContent);
+        const { approved, reason } = await validateImageForQuest(imageUrl, questContent);
         aiApproved = approved;
         if (!approved) {
-          // 거절된 파일 삭제
-          try { fs.unlinkSync(localPath); } catch (_) {}
+          // 거절된 파일 Cloudinary에서 삭제
+          await deleteFromCloudinary(imageUrl);
           connection.release();
           return res.status(400).json({ success: false, error: reason });
         }
