@@ -26,20 +26,42 @@ exports.saveRoutines = async (req, res) => {
 
       await connection.beginTransaction();
 
-      // 기존 루틴을 싹 지우고 새로 덮어씁니다 (명세서 규격: "기존 루틴은 덮어씁니다.")
-      await connection.query('DELETE FROM routines WHERE player_id = ?', [playerId]);
+      // 기존 루틴 조회 (id 보존을 위해 slot_number 기준으로 UPSERT)
+      const [existingRoutines] = await connection.query(
+        'SELECT id, slot_number FROM routines WHERE player_id = ?', [playerId]
+      );
+      const existingMap = {};
+      for (const r of existingRoutines) existingMap[r.slot_number] = r.id;
 
+      const incomingSlots = new Set();
       let savedCount = 0;
+
       for (const r of routines) {
         const { slotNumber, title, emoji } = r;
         if (!title || title.trim() === '') throw new Error('루틴 제목은 공백일 수 없습니다.');
         if (slotNumber < 1 || slotNumber > 4) throw new Error('슬롯 번호는 1에서 4 사이여야 합니다.');
+        incomingSlots.add(slotNumber);
 
-        await connection.query(
-          'INSERT INTO routines (player_id, slot_number, title, emoji) VALUES (?, ?, ?, ?)',
-          [playerId, slotNumber, title, emoji || null]
-        );
+        if (existingMap[slotNumber]) {
+          // 기존 루틴 id 유지하면서 내용만 업데이트 (daily_uploads 참조 보존)
+          await connection.query(
+            'UPDATE routines SET title = ?, emoji = ? WHERE id = ?',
+            [title, emoji || null, existingMap[slotNumber]]
+          );
+        } else {
+          await connection.query(
+            'INSERT INTO routines (player_id, slot_number, title, emoji) VALUES (?, ?, ?, ?)',
+            [playerId, slotNumber, title, emoji || null]
+          );
+        }
         savedCount++;
+      }
+
+      // 전송되지 않은 슬롯만 삭제
+      for (const slot of Object.keys(existingMap)) {
+        if (!incomingSlots.has(Number(slot))) {
+          await connection.query('DELETE FROM routines WHERE id = ?', [existingMap[slot]]);
+        }
       }
 
       await connection.commit();
