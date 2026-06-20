@@ -314,7 +314,7 @@ exports.getActivePartyQuest = async (req, res) => {
       const [uploads] = await connection.query(
         `SELECT player_id as playerId, image_url as imageUrl,
                 validation_status as validationStatus,
-                TIME_FORMAT(created_at, '%H:%i') as uploadTime
+                TIME_FORMAT(DATE_ADD(created_at, INTERVAL 9 HOUR), '%H:%i') as uploadTime
          FROM party_quest_uploads WHERE party_quest_id = ?`,
         [quest.partyQuestId]
       );
@@ -551,7 +551,7 @@ exports.getDailyUploadStatus = async (req, res) => {
 
         // 오늘 올린 사진 목록 조회
         const [uploads] = await connection.query(
-          "SELECT routine_id as routineId, image_url as imageUrl, TIME_FORMAT(created_at, '%H:%i') as uploadTime FROM daily_uploads WHERE player_id = ? AND upload_date = CURDATE()",
+          "SELECT routine_id as routineId, image_url as imageUrl, TIME_FORMAT(DATE_ADD(created_at, INTERVAL 9 HOUR), '%H:%i') as uploadTime FROM daily_uploads WHERE player_id = ? AND upload_date = CURDATE()",
           [player.playerId]
         );
 
