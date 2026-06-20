@@ -165,6 +165,18 @@ const createTables = async () => {
       );
     `);
 
+    // 9-1. mon_catalog 시드 데이터
+    await connection.query(`
+      INSERT INTO mon_catalog (id, name, category, rarity, egg_image_url, baby_image_url, child_image_url, adult_image_url) VALUES
+        (1, '고양이', 'land', 'common',   '/assets/routinemon/egg.png', '/assets/routinemon/cat/cat1.png',   '/assets/routinemon/cat/cat2.png',   '/assets/routinemon/cat/cat3.png'),
+        (2, '공룡',   'land', 'rare',     '/assets/routinemon/egg.png', '/assets/routinemon/dino/dino1.png', '/assets/routinemon/dino/dino2.png', '/assets/routinemon/dino/dino3.png'),
+        (3, '판다',   'land', 'uncommon', '/assets/routinemon/egg.png', '/assets/routinemon/panda/panda1.png', '/assets/routinemon/panda/panda2.png', '/assets/routinemon/panda/panda3.png')
+      ON DUPLICATE KEY UPDATE
+        name = VALUES(name), egg_image_url = VALUES(egg_image_url),
+        baby_image_url = VALUES(baby_image_url), child_image_url = VALUES(child_image_url),
+        adult_image_url = VALUES(adult_image_url);
+    `);
+
     // 10. mons 테이블
     await connection.query(`
       CREATE TABLE IF NOT EXISTS mons (
