@@ -1,16 +1,17 @@
 const pool = require('../db/db');
 
-// 파티 퀘스트 발생 시각
-const PARTY_HOURS = [1, 7, 12, 19]; // 시연용: 13시 → 12시 (시연 후 13으로 복구)
+// 파티 퀘스트 발생 시각 (KST 기준)
+const PARTY_HOURS = [1, 7, 13, 19];
+const KST_OFFSET = 9 * 60 * 60 * 1000;
 
 /**
  * 현재 시각이 파티 퀘스트 수락 윈도우(scheduledHour:00 ~ scheduledHour+2:30) 안이면
- * 해당 hour를 반환, 아니면 null
+ * 해당 hour를 반환, 아니면 null (KST 기준)
  */
 function getActivePartyHour() {
-  const now = new Date();
-  const curH = now.getHours();
-  const curM = now.getMinutes();
+  const kst = new Date(Date.now() + KST_OFFSET);
+  const curH = kst.getUTCHours();
+  const curM = kst.getUTCMinutes();
   for (const h of PARTY_HOURS) {
     const afterStart = curH > h || curH === h;
     const beforeEnd  = curH < h + 2 || (curH === h + 2 && curM < 30);
@@ -79,7 +80,7 @@ exports.createRoom = async (req, res) => {
     // 현재 파티 퀘스트 수락 윈도우 안이면 신규 방에 즉시 퀘스트 생성
     const activeHour = getActivePartyHour();
     if (activeHour !== null) {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = new Date(Date.now() + KST_OFFSET).toISOString().slice(0, 10);
       // 같은 시간대에 다른 방에서 이미 사용 중인 definition을 재사용 (일관성 유지)
       const [existingDefs] = await pool.query(
         'SELECT definition_id FROM party_quests WHERE quest_date = ? AND scheduled_hour = ? LIMIT 1',
