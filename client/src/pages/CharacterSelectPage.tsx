@@ -107,7 +107,7 @@ export default function CharacterSelectPage() {
       <div className="charselect-frame">
         <img
           className="choose-title"
-          src="/assets/letter/ChooseYourCharacter.png"
+          src="/assets/letter/chooseYourCharacter.png"
           alt="Choose Your Character"
         />
 
