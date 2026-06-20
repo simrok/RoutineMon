@@ -49,7 +49,7 @@ exports.getTodayUploads = async (req, res) => {
     console.log('[Today] MySQL KST today:', today, '| playerIds:', playerIds);
     const [uploads] = await connection.query(
       `SELECT player_id as playerId, routine_id as routineId, image_url as imageUrl,
-              TIME_FORMAT(created_at, '%H:%i') as uploadTime
+              TIME_FORMAT(DATE_ADD(created_at, INTERVAL 9 HOUR), '%H:%i') as uploadTime
        FROM daily_uploads
        WHERE player_id IN (?)
          AND DATE_FORMAT(DATE_ADD(created_at, INTERVAL 9 HOUR), '%Y-%m-%d') = ?`,
