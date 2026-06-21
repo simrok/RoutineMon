@@ -516,8 +516,8 @@
   }
 
   .dexscreen-phone {
-    width: 100vw;
-    min-height: 100vh;
+    width: 430px;
+    min-height: 932px;
     padding: 24px 24px 34px;
   }
 
@@ -543,7 +543,7 @@
   }
 
   .dexscreen-popup {
-    width: calc(100vw - 48px);
+    width: calc(430px - 48px);
   }
 
   .dexscreen-stage-box {

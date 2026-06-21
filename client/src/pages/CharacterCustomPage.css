@@ -8,8 +8,8 @@
 
 
 .customscreen-page {
-  width: 100vw;
-  min-height: 100vh;
+  width: 430px;
+  min-height: 932px;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -355,8 +355,8 @@
   }
 
   .customscreen-phone {
-    width: 100vw;
-    min-height: 100vh;
+    width: 430px;
+    min-height: 932px;
     padding: 24px 24px 34px;
   }
 
