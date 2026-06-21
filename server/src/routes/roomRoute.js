@@ -49,8 +49,4 @@ router.post('/party-quests/:partyQuestId/simulate-complete', roomController.simu
 // max_players 1 증가
 router.patch('/rooms/:roomCode/max-players', roomController.expandMaxPlayers);
 
-// 명세서 5.2: 오늘 일일 업로드 현황 조회
-router.get('/rooms/:roomCode/daily-uploads/today', roomController.getDailyUploadStatus);
-
-
 module.exports = router;

@@ -171,15 +171,16 @@ exports.getRoomStatus = async (req, res) => {
         [room.id]
       );
 
-      // 3. dailyQuestProgress 통계 계산 (오늘 날짜 기준 3개 이상 사진을 업로드한 고유 플레이어 수)
+      // 3. dailyQuestProgress 통계 계산 (KST 오늘 날짜 기준 3개 이상 사진을 업로드한 고유 플레이어 수)
+      const todayKST = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
       const [progressRows] = await connection.query(
         `SELECT COUNT(DISTINCT player_id) AS completedCount FROM (
            SELECT player_id FROM daily_uploads du
            JOIN players p ON du.player_id = p.id
-           WHERE p.room_id = ? AND du.upload_date = CURDATE()
+           WHERE p.room_id = ? AND du.upload_date = ?
            GROUP BY player_id HAVING COUNT(du.id) >= 3
          ) as completed_users`,
-        [room.id]
+        [room.id, todayKST]
       );
       const completedCount = progressRows[0]?.completedCount || 0;
 

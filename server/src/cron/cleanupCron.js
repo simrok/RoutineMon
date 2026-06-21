@@ -15,12 +15,13 @@
 const pool = require('../db/db');
 const { deleteFromCloudinary } = require('../utils/cloudinary');
 
-/** 오늘(또는 내일) 00:00:00까지 남은 밀리초 */
+/** KST 기준 다음 자정 00:00:00까지 남은 밀리초 */
 function msUntilMidnight() {
-  const now = new Date();
-  const midnight = new Date();
-  midnight.setHours(24, 0, 0, 0);
-  return midnight.getTime() - now.getTime();
+  const KST_OFFSET = 9 * 60 * 60 * 1000;
+  const kstNow = new Date(Date.now() + KST_OFFSET);
+  const kstMidnight = new Date(kstNow);
+  kstMidnight.setUTCHours(24, 0, 0, 0);
+  return kstMidnight.getTime() - kstNow.getTime();
 }
 
 // ── 메인 정리 작업 ────────────────────────────────────────────

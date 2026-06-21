@@ -335,6 +335,21 @@ export default function RoomPage() {
     fetchPartyQuestState()
   }, [roomCode])
 
+  // KST 자정 자동 갱신
+  useEffect(() => {
+    const msUntilKSTMidnight = () => {
+      const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000)
+      const kstMidnight = new Date(kstNow)
+      kstMidnight.setUTCHours(24, 0, 0, 0)
+      return kstMidnight.getTime() - kstNow.getTime()
+    }
+    const timer = setTimeout(() => {
+      fetchMon()
+      fetchMonFace()
+    }, msUntilKSTMidnight() + 1000)
+    return () => clearTimeout(timer)
+  }, [roomCode])
+
   // 기여도 집계 fetch
   const fetchContributionCounts = () => {
     if (!roomCode) return

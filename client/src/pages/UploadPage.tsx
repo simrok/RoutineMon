@@ -193,6 +193,20 @@ export default function UploadPage() {
     fetchPartyQuest()
   }, [roomCode])
 
+  // KST 자정 자동 갱신
+  useEffect(() => {
+    const msUntilKSTMidnight = () => {
+      const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000)
+      const kstMidnight = new Date(kstNow)
+      kstMidnight.setUTCHours(24, 0, 0, 0)
+      return kstMidnight.getTime() - kstNow.getTime()
+    }
+    const timer = setTimeout(() => {
+      fetchDailyStatus()
+    }, msUntilKSTMidnight() + 1000)
+    return () => clearTimeout(timer)
+  }, [roomCode])
+
   // ── 파티 타이머 카운트다운 ────────────────────────────────
   useEffect(() => {
     if (partyTimeLeft <= 0) return
