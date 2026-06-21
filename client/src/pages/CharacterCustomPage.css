@@ -297,12 +297,13 @@
 
 .customscreen-routine-input {
   min-width: 0;
+  width: 100%;
   border: none;
   outline: none;
   background: transparent;
   color: #18fff4;
   font-family: 'GalmuriMono9', monospace;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .customscreen-routine-input:disabled {
