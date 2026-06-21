@@ -1,3 +1,4 @@
+import React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { BgmProvider } from './context/BgmContext'
 import { useViewportScale } from './hooks/useViewportScale'
@@ -17,20 +18,34 @@ import LogCreatePage from './pages/LogCreatePage'
 import RoutineSetupPage from './pages/RoutineSetupPage'
 
 function App() {
-  const scale = useViewportScale()
+  const { scale, isDesktop } = useViewportScale()
+
+  const wrapperStyle: React.CSSProperties = isDesktop
+    ? {
+        // 데스크탑: 뷰포트에 고정, 높이 제한, 빈 공간 없음
+        width: '430px',
+        height: '932px',
+        transform: `scale(${scale})`,
+        transformOrigin: 'top left',
+        position: 'fixed',
+        top: 0,
+        left: '50%',
+        marginLeft: `${-(430 * scale) / 2}px`,
+        overflow: 'hidden',
+      }
+    : {
+        // 모바일: 문서 흐름에 따라 자연스럽게 스크롤
+        width: '430px',
+        transform: `scale(${scale})`,
+        transformOrigin: 'top left',
+        position: 'relative',
+        left: '50%',
+        marginLeft: `${-(430 * scale) / 2}px`,
+      }
 
   return (
     <BgmProvider>
-      <div
-        style={{
-          width: '430px',
-          transform: `scale(${scale})`,
-          transformOrigin: 'top left',
-          position: 'relative',
-          left: '50%',
-          marginLeft: `${-(430 * scale) / 2}px`,
-        }}
-      >
+      <div style={wrapperStyle}>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
