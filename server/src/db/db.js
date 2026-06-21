@@ -108,10 +108,10 @@ const createTables = async () => {
         (3, '웃는 표정으로 셀카를 찍어라!', TRUE),
         (4, '음료를 손에 들고 찍어라!', TRUE),
         (5, '책을 들고 있는 사진을 찍어라!', TRUE),
-        (6, '신발 신은 발을 찍어라!', TRUE),
+        (6, '신발 신은 발을 찍어라!', FALSE),
         (7, '손바닥을 카메라에 보여줘라!', TRUE),
         (8, '과일이나 채소를 찍어라!', TRUE),
-        (9, '거울에 비친 자신을 찍어라!', TRUE),
+        (9, '거울에 비친 자신을 찍어라!', FALSE),
         (10, '엄지척 포즈로 셀카를 찍어라!', TRUE)
       ON DUPLICATE KEY UPDATE content = VALUES(content), is_active = VALUES(is_active);
     `);

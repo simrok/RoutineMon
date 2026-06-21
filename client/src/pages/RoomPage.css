@@ -153,11 +153,24 @@
   height: 130px;
 }
 
+.roompage-mon-frame::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  left: 25px;
+  right: 25px;
+  bottom: 35px;
+  background-color: #F287FB;
+  z-index: 0;
+}
+
 .roompage-mon-frame-img {
+  position: relative;
   width: 90%;
   height: 90%;
   object-fit: contain;
   image-rendering: pixelated;
+  z-index: 1;
 }
 
 .roompage-main-mon {
@@ -170,6 +183,7 @@
   image-rendering: pixelated;
   animation: main-mon-breathe 4s ease-in-out infinite;
   transform-origin: center bottom;
+  z-index: 2;
 }
 
 @keyframes main-mon-breathe {
@@ -185,6 +199,8 @@
   font-size: 14px;
   margin: 0.1px 0 0;
   line-height: 0.01;
+  width: 156px;
+  text-align: center;
 }
 
 .roompage-mon-right {
