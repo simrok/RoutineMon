@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { BgmProvider } from './context/BgmContext'
+import { useViewportScale } from './hooks/useViewportScale'
 import LandingPage from './pages/LandingPage'
 import JoinPage from './pages/JoinPage'
 import CharacterSelectPage from './pages/CharacterSelectPage'
@@ -16,8 +17,23 @@ import LogCreatePage from './pages/LogCreatePage'
 import RoutineSetupPage from './pages/RoutineSetupPage'
 
 function App() {
+  const scale = useViewportScale()
+
   return (
     <BgmProvider>
+      <div
+        style={{
+          width: '430px',
+          height: '932px',
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          position: 'fixed',
+          top: 0,
+          left: '50%',
+          marginLeft: `${-(430 * scale) / 2}px`,
+          overflow: 'hidden',
+        }}
+      >
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -45,6 +61,7 @@ function App() {
           <Route path="/room/:roomCode/log-create" element={<LogCreatePage />} />
         </Routes>
       </BrowserRouter>
+      </div>
     </BgmProvider>
   )
 }
