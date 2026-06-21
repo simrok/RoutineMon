@@ -752,7 +752,7 @@
 }
 
 .landing-section2-inner {
-  overflow: hidden;
+  overflow-y: auto;
   justify-content: center;
 }
 
