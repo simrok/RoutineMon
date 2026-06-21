@@ -6,7 +6,7 @@
 .charselect-container {
   width: 100%;
   max-width: 430px;
-  height: 100vh;
+  min-height: 100vh;
   margin: 0 auto;
   background-image: url('/assets/backgroundImage/back.png');
   background-size: cover;
@@ -16,7 +16,7 @@
   align-items: center;
   padding: 20px 16px 20px;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 /* 스피커 버튼 */

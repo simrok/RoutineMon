@@ -24,14 +24,11 @@ function App() {
       <div
         style={{
           width: '430px',
-          height: '932px',
           transform: `scale(${scale})`,
           transformOrigin: 'top left',
-          position: 'fixed',
-          top: 0,
+          position: 'relative',
           left: '50%',
           marginLeft: `${-(430 * scale) / 2}px`,
-          overflow: 'hidden',
         }}
       >
       <BrowserRouter>
